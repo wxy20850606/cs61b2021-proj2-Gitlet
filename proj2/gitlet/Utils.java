@@ -57,7 +57,8 @@ class Utils {
         }
     }
 
-    /** Returns the SHA-1 hash of the concatenation of the strings in
+    /** Returns the SHA-1 hash of the co
+     * ncatenation of the strings in
      *  VALS. */
     static String sha1(List<Object> vals) {
         return sha1(vals.toArray(new Object[vals.size()]));
@@ -236,4 +237,12 @@ class Utils {
         System.out.printf(msg, args);
         System.out.println();
     }
+
+    public static void exitWithError(String message) {
+        if (message != null && !message.equals("")) {
+            System.out.println(message);
+        }
+        System.exit(-1);
+    }
+
 }
