@@ -28,8 +28,10 @@ public class Main {
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
-                validateNumArgs(args, 1);
+                validateNumArgs(args, 2);
                 validateIfInitialized();
+                String filename = args[1];
+                GitletRepository.add(filename);
             // TODO: FILL THE REST IN
             case "commit":
                 //TODO

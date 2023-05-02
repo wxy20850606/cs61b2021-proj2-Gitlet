@@ -86,7 +86,7 @@ public class Commit implements Serializable {
     private File SHA1ToFile(String sha1){
         String first2 = sha1.substring(0,2);
         String last38 = sha1.substring(2);
-        File fileFolder = Utils.join(GitletRepository.OBJECT_FILE,first2);
+        File fileFolder = Utils.join(GitletRepository.OBJECT_FOLDER,first2);
         fileFolder.mkdir();
         File objectFile = Utils.join(fileFolder,last38);
 
