@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 
+
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author TODO
  */
@@ -29,7 +30,6 @@ public class Main {
                 // TODO: handle the `add [filename]` command
                 validateNumArgs(args, 1);
                 validateIfInitialized();
-                break;
             // TODO: FILL THE REST IN
             case "commit":
                 //TODO
