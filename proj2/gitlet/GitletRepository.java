@@ -2,6 +2,8 @@ package gitlet;
 
 import java.io.File;
 
+import static gitlet.Utils.writeContents;
+
 /** */
 public class GitletRepository {
 /** A repository for Gitlet */
@@ -32,10 +34,13 @@ public class GitletRepository {
             System.err.println(e);
         }
 
-        Commit initial = new Commit("initial commit",null);
-        byte[] a = Utils.serialize(initial);
-        String sha1 = Utils.sha1(a);
-        initial.saveInitialCommit(sha1);
+        //initial commit
+        Commit initial = new Commit("initial commit");
+        initial.generateSHA1();
 
+        //save initial commit
+        initial.saveInitialCommit();
+        //set the HEAD
+        writeContents(HEAD_FILE,initial.getID().toString());
     }
 }

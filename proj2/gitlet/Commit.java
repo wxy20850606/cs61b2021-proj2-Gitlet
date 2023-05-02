@@ -1,12 +1,18 @@
 package gitlet;
 
 // TODO: any imports you need here
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Date;
+
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeMap;
+
+import static gitlet.Utils.sha1;
 
 
 /** Represents a gitlet commit object.
@@ -31,54 +37,69 @@ public class Commit implements Serializable {
     private String author;
 
     /** java.util.Date and java.util.Formatter are useful for getting and formatting times.*/
-    private Date timestamp;
-    private String parent;
-
-    /** The message of this Commit. */
+    private String timestamp;
+    private String parent1;
+    private String parent2;
     private String message;
+    private String ID;
 
     /**
      *Map<String, String> map = new TreeMap<>();
      *map filename(string) to different versions(as different files) eg:map hello.txt to file version( .gitlet/objects/66/ABCD) */
-    private TreeMap<String, File> map = null;
+    private TreeMap<String, String> map = new TreeMap<>();
 
     /** The constructor of first Commit. */
-    public Commit(String message,String parent){
-        Date d = new Date();
-        this.timestamp = d;
+    public Commit(String message){
+        this.timestamp = formatDate();
         this.message = message;
-        this.parent = parent;
     }
 
     public Commit(String author,String parent,String message,TreeMap<String, File> map){
         this.author = author;
-        this.parent= parent;
         this.message = message;
     }
     public String getMessage(){
         return this.message;
     }
 
-    public Date getTimestamp(){
+    public String getTimestamp(){
         return this.timestamp;
     }
 
-    public String getParent(){
-        return this.parent;
+    public String getParent() {
+        return this.parent1;
+    }
+    public String getSecondParent(){
+        return this.parent2;
+    }
+
+    public String getID(){
+        return this.ID;
     }
     /** transient fields will not be serialized
     // when back in and deserialized, will be set to their default values.*/
     // private transient MyCommitType parent1;
 
+    public void generateSHA1(){
+        this.ID = sha1(this.message);
+    }
     private File SHA1ToFile(String sha1){
         String first2 = sha1.substring(0,2);
         String last38 = sha1.substring(2);
         File fileFolder = Utils.join(GitletRepository.OBJECT_FILE,first2);
+        fileFolder.mkdir();
         File objectFile = Utils.join(fileFolder,last38);
+
         return objectFile;
     }
-    public void saveInitialCommit(String x){
-        File initialCommit = SHA1ToFile(x);
+    public void saveInitialCommit(){
+        File initialCommit = SHA1ToFile(this.getID());
+        try{
+            initialCommit.createNewFile();
+        }
+        catch(Exception e){
+            System.err.println(e);
+        }
         Utils.writeObject(initialCommit,this);
     }
     public void saveCommit(){
@@ -88,4 +109,15 @@ public class Commit implements Serializable {
        //write back any new objects
        throw new UnsupportedOperationException();
    }
+
+   public static String formatDate(){
+       OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
+       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy Z");
+       String formattedDateTime = currentDateTime.format(formatter);
+       return formattedDateTime;
+   }
+
+
+
+
 }

@@ -11,8 +11,7 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
     public static void main(String[] args) {
-        String val = Utils.sha1("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d");
-        System.out.println(val);
+
         // TODO: what if args is empty?
         if (args.length == 0) {
             Utils.exitWithError("Please enter a command.");
