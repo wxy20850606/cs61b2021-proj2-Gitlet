@@ -23,8 +23,6 @@ public class Main {
                 validateNumArgs(args, 1);
                 validateNotInited();
                 GitletRepository.init();
-                // TODO: handle the `init` command
-                // Commit initial = new Commit("initial commit",null);
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
@@ -32,9 +30,12 @@ public class Main {
                 validateIfInitialized();
                 String filename = args[1];
                 GitletRepository.add(filename);
+                break;
             // TODO: FILL THE REST IN
             case "commit":
-                //TODO
+                validateNumArgs(args, 3);
+                validateIfInitialized();
+                GitletRepository.commit(args[2]);
                 break;
             case "rm":
                 //TODO
