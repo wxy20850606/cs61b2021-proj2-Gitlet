@@ -59,6 +59,7 @@ public class Commit implements Serializable {
 
     public Commit(String parent1,String message,Map<String,String> map){
         this.message = message;
+        this.parent1 = parent1;
         this.timestamp = formatDate();
         this.filenameTofilePathMap = map;
         this.SHA1 = sha1(parent1 + message + timestamp + map.toString());
@@ -72,8 +73,12 @@ public class Commit implements Serializable {
         return this.timestamp;
     }
 
-    public String getParent() {
+    public String getParent1SHA1(){
         return this.parent1;
+    }
+    public Commit getParent1() {
+        File parent1File= createFilepathFromSha1(this.parent1,OBJECT_FOLDER);
+        return readObject(parent1File,Commit.class);
     }
     public String getSecondParent(){
         return this.parent2;
@@ -88,11 +93,14 @@ public class Commit implements Serializable {
     }
 
     public void makeCommit() {
-        /** update log history file */
+        /** write back to log file */
+        writeToGlobalLog(this);
         /** update master pointer */
         updateHeadPointerFile(this.getSHA1());
         /** save the commit object */
         save();
+        //modify files according to staging area.
+        //write back any new objects
     }
     public Map<String, String> removeFromCommit(String filename){
         Commit lastCommit = getLastCommit();
@@ -102,11 +110,6 @@ public class Commit implements Serializable {
     }
     /** transient fields will not be serialized
     // when back in and deserialized, will be set to their default values.*/
-    // private transient MyCommitType parent1;
-
-
-    //public void lastCommitObject(){}
-    //public void createCommit(){}
     public void save(){
         writeObject(this.commitFile,this);
     }
@@ -115,16 +118,6 @@ public class Commit implements Serializable {
     public void writeCommitLog(){
         throw new UnsupportedOperationException();
     }
-    public void save(File file){
-       //clone the head commit
-
-       //modify the message and timestamp
-
-       //modify files according to staging area.
-       //write back any new objects
-       throw new UnsupportedOperationException();
-       //write back to log file
-   }
     public static Commit getLastCommit(){
         //get current branch's head pointer
         File refsFile = getHeadPointerFile();
@@ -144,7 +137,6 @@ public class Commit implements Serializable {
        String formattedDateTime = currentDateTime.format(formatter);
        return formattedDateTime;
    }
-
 
 
 }

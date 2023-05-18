@@ -33,9 +33,9 @@ public class Main {
                 break;
             // TODO: FILL THE REST IN
             case "commit":
-                validateNumArgs(args, 3);
+                validateMessage(args, 2);
                 validateIfInitialized();
-                GitletRepository.commit(args[2]);
+                GitletRepository.commit(args[1]);
                 break;
             case "rm":
                 validateNumArgs(args, 2);
@@ -43,10 +43,14 @@ public class Main {
                 GitletRepository.rm(args[1]);
                 break;
             case "log":
-                //TODO
+                validateNumArgs(args, 1);
+                validateIfInitialized();
+                GitletRepository.log();
                 break;
             case "global-log":
-                //TODO
+                validateNumArgs(args, 1);
+                validateIfInitialized();
+                GitletRepository.globalLog();
                 break;
             case "find":
                 //TODO
@@ -85,6 +89,12 @@ public class Main {
     public static void validateNumArgs(String[] args, int n) {
         if (args.length != n) {
             Utils.exitWithError("Incorrect operands.");
+        }
+    }
+
+    public static void validateMessage(String[] args, int n) {
+        if (args.length != n) {
+            Utils.exitWithError("Please enter a commit message.");
         }
     }
 

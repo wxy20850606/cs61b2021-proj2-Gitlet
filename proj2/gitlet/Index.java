@@ -61,8 +61,12 @@ public class Index implements Serializable {
     public Map<String,String> getMap(){
         return this.added;
     }
+
     public void clear(){
         added.clear();
         save();
+    }
+    public boolean stagingAreaFlag(){
+        return (added.isEmpty() && removal.isEmpty());
     }
 }

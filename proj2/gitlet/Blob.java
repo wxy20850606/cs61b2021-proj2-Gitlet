@@ -20,8 +20,6 @@ public class Blob implements Serializable {
         this.originalFile = join(GitletRepository.CWD,filename);
         this.content = readContents(this.originalFile);
         this.SHA1 = sha1(this.content);
-        this.blobFile = createFilepathFromSha1(SHA1,OBJECT_FOLDER);
-        this.blobFileInString = this.blobFile.toString();
     }
 
     public String getFilename(){
@@ -39,6 +37,7 @@ public class Blob implements Serializable {
         return this.blobFile;
     }
     public void save(){
+        this.blobFile = createFilepathFromSha1(SHA1,OBJECT_FOLDER);
         writeObject(this.getBlobFile(),this);
     }
     // track map(sha-1,filename) in order to check whether a file is staged twice when needed

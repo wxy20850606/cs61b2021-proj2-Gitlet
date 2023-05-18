@@ -35,11 +35,11 @@ public class GitletRepository implements Serializable {
     public static final File LOG_HEAD_FILE = join(LOG_FOLDER,"HEAD");
     public static final File LOG_REFS_FOLDER = join(LOG_FOLDER,"refs");
     public static final File LOG_REFS_HEAD_FOLDER = join(LOG_REFS_FOLDER,"heads");
-    public static final File LOG_REFS_HEAD_FOLDER_MAIN_FILE = join(LOG_REFS_HEAD_FOLDER,"master");
+    public static final File LOG_REFS_HEAD_FOLDER_MASTER_FILE = join(LOG_REFS_HEAD_FOLDER,"master");
     public static final File OBJECT_FOLDER = join(GITLET_FOLDER,"objects");
     public static final File REFS_FOLDER = join(GITLET_FOLDER,"refs");
     public static final File REFS_HEADS_FOLDER = join(REFS_FOLDER,"heads");
-    public static final File LOG_REFS_MASTER_FILE = join(REFS_HEADS_FOLDER, "master");
+    public static final File REFS_HEAD_MASTER_FILE = join(REFS_HEADS_FOLDER, "master");
 
     //static final File REMOVE_FOLDER = join(STEAGE_FOLDER,"remove");
 
@@ -58,24 +58,27 @@ public class GitletRepository implements Serializable {
     }
 
     public static void add(String filename){
-        Index index = readObject(INDEX_FILE, Index.class);
+        if(!checkFileExistence(filename)){
+            Utils.exitWithError("File does not exist.");
+        };
+        /** If the current working version of the file is identical to the version in the current commit, do not stage it to be added*/
+
         Blob blob = new Blob(filename);
+        if(checkIfBlobExist(filename,blob.getSHA1())) {
+            System.exit(0);
+        }
+        index = readObject(INDEX_FILE, Index.class);
         blob.save();
         index.add(blob.getFilename(),blob.getSHA1());
-        /**another approach */
-        //add to staging area
-        //File source = join(CWD,filename);
-        //byte[] content = readContents(source);
-        //String SHA1 = sha1(content);
-        //Index index = readObject(INDEX_FILE, Index.class);
-        //index.add(filename,SHA1);
-        //writeObject(INDEX_FILE,index);
     }
 
     public static void commit(String message){
         /** */
         index = readObject(INDEX_FILE,Index.class);
         /** get last commit map*/
+        if(index.stagingAreaFlag()){
+            Utils.exitWithError("No changes added to the commit.");
+        }
         map = getLastCommitMap();
         /** get staging area map*/
         Map<String,String> stagingMap = index.getMap();
@@ -111,6 +114,23 @@ public class GitletRepository implements Serializable {
         }
     }
 
+    public static void log(){
+        currentCommit = getLastCommit();
+        while(currentCommit != null){
+            printCommitLog(currentCommit);
+            if(currentCommit.getParent1SHA1() != null){
+                currentCommit = currentCommit.getParent1();
+            }
+            else{
+                break;
+            }
+        }
+    }
+    public static void globalLog(){
+        String log = readContentsAsString(LOG_HEAD_FILE);
+        System.out.println(log);
+    }
+
     private static void mkDir(){
         GITLET_FOLDER.mkdir();
         LOG_FOLDER.mkdir();
@@ -133,16 +153,19 @@ public class GitletRepository implements Serializable {
         /** write .gitlet/HEAD file */
         writeContents(HEAD_FILE,"refs/heads/master");
 
-        /** write .gitlet/HEAD file */
-        writeContents(LOG_REFS_MASTER_FILE,initialCommit.getSHA1().toString());
+        /** write .gitlet/refs/heads/master file */
+        writeContents(REFS_HEAD_MASTER_FILE,initialCommit.getSHA1().toString());
 
+        /** write .gitlet/logs/HEAD file */
+        writeToGlobalLog(initialCommit);
     }
     private static void createFile(){
         try{
             HEAD_FILE.createNewFile();
             INDEX_FILE.createNewFile();
             LOG_HEAD_FILE.createNewFile();
-            LOG_REFS_MASTER_FILE.createNewFile();
+            REFS_HEAD_MASTER_FILE.createNewFile();
+            LOG_REFS_HEAD_FOLDER_MASTER_FILE.createNewFile();
         }
         catch(Exception e){
             System.err.println(e);
@@ -175,5 +198,28 @@ public class GitletRepository implements Serializable {
         //get current branch's head pointer
         File refsFile = getHeadPointerFile();
         writeContents(refsFile,sha1);
+    }
+
+    private static boolean checkFileExistence(String filename){
+        File file = join(CWD,filename);
+        return file.exists();
+    }
+
+    private static boolean checkIfBlobExist(String filename,String sha1){
+        return (getLastCommit().getMap().get(filename) == sha1);
+    }
+
+    public static void printCommitLog(Commit x){
+        System.out.println("===");
+        System.out.println("Commit " + x.getSHA1());
+        System.out.println("Date:" + x.getTimestamp().toString());
+        System.out.println(x.getMessage());
+        System.out.println();
+    }
+
+    public static void writeToGlobalLog(Commit x){
+        String oldLog = readContentsAsString(LOG_HEAD_FILE);
+        String allLog = oldLog +"\n"+"==="+"\n"+"Commit "+ x.getSHA1() + "\n" + "Date:" + x.getTimestamp().toString() + "\n" + x.getMessage() ;
+        writeContents(LOG_HEAD_FILE,allLog);
     }
 }
