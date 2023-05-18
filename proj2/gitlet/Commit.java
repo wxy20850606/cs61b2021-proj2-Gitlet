@@ -8,10 +8,8 @@ import java.time.format.DateTimeFormatter;
 import java.io.File;
 import java.io.Serializable;
 import static gitlet.Utils.*;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
+
+import java.util.*;
 
 import static gitlet.Utils.sha1;
 import static gitlet.GitletRepository.*;
@@ -54,7 +52,7 @@ public class Commit implements Serializable {
         this.timestamp = formatDate();
         this.message = message;
         this.SHA1 = sha1(this.message);
-        this.filenameTofilePathMap = new TreeMap<>();
+        this.filenameTofilePathMap = new HashMap<>();
         this.commitFile = createFilepathFromSha1(SHA1,OBJECT_FOLDER);
         this.commitFilePath = commitFile.toString();
     }
@@ -63,7 +61,8 @@ public class Commit implements Serializable {
         this.message = message;
         this.timestamp = formatDate();
         this.filenameTofilePathMap = map;
-        this.SHA1 = sha1(parent1+ message + timestamp + map.toString());
+        this.SHA1 = sha1(parent1 + message + timestamp + map.toString());
+        this.commitFile = createFilepathFromSha1(SHA1,OBJECT_FOLDER);
     }
     public String getMessage(){
         return this.message;
@@ -88,32 +87,18 @@ public class Commit implements Serializable {
         return this.filenameTofilePathMap;
     }
 
-    public static Commit getLastCommit(){
-        //get .gitlet/HEAD file
-        String head = readContentsAsString(HEAD_FILE);
-        //get current branch's head pointer
-        File refsFile = join(GITLET_FOLDER,head);
-        System.out.println(refsFile.toString());
-        String lastCommitSHA1 = readContentsAsString(refsFile);
-        //read lastCommit as object to get needed information
-        File lastCommitFile = createFilepathFromSha1(lastCommitSHA1,OBJECT_FOLDER);
-        Commit lastCommit = readObject(lastCommitFile,Commit.class);
-        return lastCommit;
+    public void makeCommit() {
+        /** update log history file */
+        /** update master pointer */
+        updateHeadPointerFile(this.getSHA1());
+        /** save the commit object */
+        save();
     }
-    public void makeCommit(String message,Map<String,String> map){
-        this.message = message;
-        this.timestamp = formatDate();
-        this.filenameTofilePathMap = map;
-        this.SHA1 = sha1(parent1+ message + timestamp + map.toString());
-        System.out.println(this.filenameTofilePathMap.toString());
-
-        //clear the staging area
-        //write the staging are object
-
-        //update log history file
-        //update master pointer
-
-
+    public Map<String, String> removeFromCommit(String filename){
+        Commit lastCommit = getLastCommit();
+        Map<String, String> lastcommitMap = lastCommit.getMap();
+        lastcommitMap.remove(filename);
+        return lastcommitMap;
     }
     /** transient fields will not be serialized
     // when back in and deserialized, will be set to their default values.*/
@@ -140,6 +125,18 @@ public class Commit implements Serializable {
        throw new UnsupportedOperationException();
        //write back to log file
    }
+    public static Commit getLastCommit(){
+        //get current branch's head pointer
+        File refsFile = getHeadPointerFile();
+        String lastCommitSHA1 = readContentsAsString(refsFile);
+        //read lastCommit as object to get needed information
+        File lastCommitFile = createFilepathFromSha1(lastCommitSHA1,OBJECT_FOLDER);
+        Commit lastCommit = readObject(lastCommitFile,Commit.class);
+        return lastCommit;
+    }
+    public static Map<String, String> getLastCommitMap(){
+        return getLastCommit().getMap();
+    }
 
    public static String formatDate(){
        OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
@@ -147,6 +144,7 @@ public class Commit implements Serializable {
        String formattedDateTime = currentDateTime.format(formatter);
        return formattedDateTime;
    }
+
 
 
 }

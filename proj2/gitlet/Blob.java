@@ -38,8 +38,8 @@ public class Blob implements Serializable {
     public File getBlobFile(){
         return this.blobFile;
     }
-    public void save(File file){
-        writeContents(file,this.content);
+    public void save(){
+        writeObject(this.getBlobFile(),this);
     }
     // track map(sha-1,filename) in order to check whether a file is staged twice when needed
 

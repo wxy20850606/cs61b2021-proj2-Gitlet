@@ -38,7 +38,9 @@ public class Main {
                 GitletRepository.commit(args[2]);
                 break;
             case "rm":
-                //TODO
+                validateNumArgs(args, 2);
+                validateIfInitialized();
+                GitletRepository.rm(args[1]);
                 break;
             case "log":
                 //TODO

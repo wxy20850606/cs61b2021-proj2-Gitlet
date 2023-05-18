@@ -2,9 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import static gitlet.Utils.writeContents;
 import static gitlet.Utils.*;
@@ -45,10 +43,11 @@ public class GitletRepository implements Serializable {
 
     //static final File REMOVE_FOLDER = join(STEAGE_FOLDER,"remove");
 
-    private static Index index = new Index();
+    private static Index index;
     private static Commit currentCommit;
     private static Branch currentBranch;
     private static Blob currentBlob;
+    private static Map<String, String> map;
 
 /** handle the `init` command*/
     public static void init(){
@@ -61,9 +60,8 @@ public class GitletRepository implements Serializable {
     public static void add(String filename){
         Index index = readObject(INDEX_FILE, Index.class);
         Blob blob = new Blob(filename);
-        blob.save(blob.getBlobFile());
+        blob.save();
         index.add(blob.getFilename(),blob.getSHA1());
-        index.save();
         /**another approach */
         //add to staging area
         //File source = join(CWD,filename);
@@ -72,6 +70,45 @@ public class GitletRepository implements Serializable {
         //Index index = readObject(INDEX_FILE, Index.class);
         //index.add(filename,SHA1);
         //writeObject(INDEX_FILE,index);
+    }
+
+    public static void commit(String message){
+        /** */
+        index = readObject(INDEX_FILE,Index.class);
+        /** get last commit map*/
+        map = getLastCommitMap();
+        /** get staging area map*/
+        Map<String,String> stagingMap = index.getMap();
+        /** minus rm file*/
+        HashSet<String> removalList =  index.removal;
+        for(String x : removalList){
+            map.remove(x);
+        }
+        //System.out.println("staging map:" + stagingMap.toString());
+        /** last commit map add stagingarea-added*/
+        Map<String,String> newCommitMap = combine(map,stagingMap);
+        //System.out.println("new map" + newCommitMap.toString());
+        /** make commit*/
+        Commit newCommit = new Commit(getLastCommit().getSHA1(),message,newCommitMap);
+        newCommit.makeCommit();
+        index.clear();
+    }
+
+    public static void rm(String filename){
+        /** Unstage the file if it is currently staged for addition. delete*/
+        index = readObject(INDEX_FILE,Index.class);
+        currentCommit = getLastCommit();
+        if(index.getMap().containsKey(filename)){
+            index.remove(filename);
+        }
+        /** If the file is tracked in the current commit, stage it for removal ,delete*/
+        else if(currentCommit.getMap().containsKey(filename)){
+            index.stageRemoval(filename);
+        }
+        /** If the file is neither staged nor tracked by the head commit, print the error message No reason to remove the file. */
+        else{
+            Utils.exitWithError("No reason to remove the file.");
+        }
     }
 
     private static void mkDir(){
@@ -111,22 +148,6 @@ public class GitletRepository implements Serializable {
             System.err.println(e);
         }
     }
-
-
-    public static void commit(String message){
-        Commit lastCommit = getLastCommit();
-        Map<String,String> lastCommitMap = lastCommit.getMap();
-        Index indexObject = readObject(INDEX_FILE,Index.class);
-        Map<String,String> stagingMap = indexObject.getMap();
-        System.out.println("staging map:" + stagingMap.toString());
-        Map<String,String> newCommitMap = combine(lastCommitMap,stagingMap);
-        System.out.println("new map" + newCommitMap.toString());
-        Commit currentCommit = new Commit(message);
-        currentCommit.makeCommit(message,newCommitMap);
-        indexObject.clear();
-        currentCommit.save();
-    }
-
     public static Map<String,String> combine(Map<String,String> a,Map<String,String> b){
         Set<String> keyA = a.keySet();
         Set<String> keyB = b.keySet();
@@ -135,7 +156,7 @@ public class GitletRepository implements Serializable {
         }
         return a;
     }
-    static File createFilepathFromSha1(String sha1,File file){
+    public static File createFilepathFromSha1(String sha1,File file){
         String first2 = sha1.substring(0,2);
         String last38 = sha1.substring(2);
         File subFolder = Utils.join(file,first2);
@@ -143,13 +164,16 @@ public class GitletRepository implements Serializable {
         File filepath = Utils.join(subFolder,last38);
         return filepath;
     }
+    public static File getHeadPointerFile(){
+        String head = readContentsAsString(HEAD_FILE);
+        //get current branch's head pointer
+        File refsFile = join(GITLET_FOLDER,head);
+        return refsFile;
+    }
 
-    private static File blobToFile(String sha1){
-        String first2 = sha1.substring(0,2);
-        String last38 = sha1.substring(2);
-        File fileFolder = Utils.join(OBJECT_FOLDER,first2);
-        fileFolder.mkdir();
-        File objectFile = Utils.join(fileFolder,last38);
-        return objectFile;
+    public static void updateHeadPointerFile(String sha1){
+        //get current branch's head pointer
+        File refsFile = getHeadPointerFile();
+        writeContents(refsFile,sha1);
     }
 }

@@ -2,38 +2,56 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import gitlet.GitletRepository.*;
 
 import static gitlet.GitletRepository.*;
-import static gitlet.Utils.readObject;
-import static gitlet.Utils.writeObject;
+import static gitlet.Utils.*;
 
 
 public class Index implements Serializable {
     public final Map<String,String> added;
-    //public final ArrayList<String> removal;
+    public final HashSet<String> removal;
 
     public Index(){
         added = new HashMap<>();
-        //removal = new ArrayList<>();
+        removal = new HashSet<>();
     }
 
     public void add(String filename,String sha1){
         added.put(filename,sha1);
+        save();
     }
 
-    public Set<String> AddedFilesNamesSet(){
+    public void remove(String filename){
+        added.remove(filename);
+        save();
+        /** remove the file in the working directory */
+        File removalFile = join(CWD,filename);
+        removalFile.delete();
+    }
+
+    public void stageRemoval(String filename){
+        removal.add(filename);
+        save();
+        File removalFile = join(CWD,filename);
+        removalFile.delete();
+    }
+
+    public void unStage(String filename){
+        if(addedFilesNamesSet().contains(filename)){
+        added.remove(filename);
+        save();
+        }
+        return;
+    }
+    public Set<String> addedFilesNamesSet(){
         Set<String> keySet = added.keySet();
         return keySet;
     }
 
     public static Index fromFile(){
-
         return readObject(INDEX_FILE, Index.class);
     }
     public void save(){
@@ -45,6 +63,6 @@ public class Index implements Serializable {
     }
     public void clear(){
         added.clear();
-        writeObject(INDEX_FILE,this);
+        save();
     }
 }
