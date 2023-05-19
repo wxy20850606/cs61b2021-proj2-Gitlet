@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
@@ -131,6 +132,26 @@ public class GitletRepository implements Serializable {
         System.out.println(log);
     }
 
+    public static void find(String message) {
+        List<String> fileNameList = getFileNameList(OBJECT_FOLDER);
+        int count = 0;
+        for (String fileName : fileNameList) {
+            File file = join(OBJECT_FOLDER, fileName);
+            try {
+                currentCommit = readObject(file, Commit.class);
+                if (currentCommit.getMessage().equals(message)) {
+                    System.out.println(currentCommit.getSHA1());
+                    count = count + 1;
+                }
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+        }
+        if (count == 0) {
+                exitWithError("Found no commit with that message.");
+            }
+    }
+
     private static void mkDir(){
         GITLET_FOLDER.mkdir();
         LOG_FOLDER.mkdir();
@@ -222,4 +243,28 @@ public class GitletRepository implements Serializable {
         String allLog = oldLog +"\n"+"==="+"\n"+"Commit "+ x.getSHA1() + "\n" + "Date:" + x.getTimestamp().toString() + "\n" + x.getMessage() ;
         writeContents(LOG_HEAD_FILE,allLog);
     }
+
+    public static Blob getCurrentBlob() {
+        return currentBlob;
+    }
+
+    /** Loop through objects folder to get all the filenames */
+    static List<String> getFileNameList(File dir) {
+        List<String> list = new ArrayList<>();
+        File[] files = dir.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                String folderName = file.getName();
+                File[] subFolderFiles = file.listFiles();
+                for (File subFile : subFolderFiles) {
+                    String subFileName = subFile.getName();
+                    String fileName = folderName + "/" + subFileName;
+                    list.add(fileName);
+                }
+            }
+        }
+        return list;
+    }
+
+
 }

@@ -29,14 +29,15 @@ public class Index implements Serializable {
         save();
         /** remove the file in the working directory */
         File removalFile = join(CWD,filename);
-        removalFile.delete();
+        restrictedDelete(removalFile);
+
     }
 
     public void stageRemoval(String filename){
         removal.add(filename);
         save();
         File removalFile = join(CWD,filename);
-        removalFile.delete();
+        restrictedDelete(removalFile);
     }
 
     public void unStage(String filename){

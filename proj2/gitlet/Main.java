@@ -53,7 +53,9 @@ public class Main {
                 GitletRepository.globalLog();
                 break;
             case "find":
-                //TODO
+                validateNumArgs(args, 2);
+                validateIfInitialized();
+                GitletRepository.find(args[1]);
                 break;
             case "status":
                 //TODO
