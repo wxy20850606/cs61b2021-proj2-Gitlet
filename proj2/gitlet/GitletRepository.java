@@ -84,7 +84,7 @@ public class GitletRepository implements Serializable {
         /** get staging area map*/
         Map<String,String> stagingMap = index.getMap();
         /** minus rm file*/
-        HashSet<String> removalList =  index.removal;
+        TreeSet<String> removalList =  index.removal;
         for(String x : removalList){
             map.remove(x);
         }
@@ -103,7 +103,7 @@ public class GitletRepository implements Serializable {
         index = readObject(INDEX_FILE,Index.class);
         currentCommit = getLastCommit();
         if(index.getMap().containsKey(filename)){
-            index.remove(filename);
+            index.stageRemoval(filename);
         }
         /** If the file is tracked in the current commit, stage it for removal ,delete*/
         else if(currentCommit.getMap().containsKey(filename)){
@@ -152,6 +152,37 @@ public class GitletRepository implements Serializable {
             }
     }
 
+    public static void branch(String branchName){
+        Branch newbranch = new Branch(branchName);
+        newbranch.create();
+    }
+
+    public static void status(){
+        System.out.println("=== Branches ===");
+        List<String> filenames = plainFilenamesIn(REFS_HEADS_FOLDER);
+        Collections.sort(filenames);
+        for (String str : filenames) {
+            if(str.equals(getCurrentBranch())){
+                System.out.println("*" + str);
+            }
+            else{
+                System.out.println(str);
+            }
+        }
+        System.out.println("\n");
+        System.out.println("=== Staged Files ===");
+        List<String> list = new ArrayList<>(readStagingArea().getMap().keySet());
+        Collections.sort(list);
+        for (String str1 : list){
+            System.out.println(str1);
+        }
+        System.out.println("\n");
+        System.out.println("=== Removed Files ===");
+        for(String str2:readStagingArea().getRemoval()){
+            System.out.println(str2);
+        }
+        System.out.println("\n");
+    }
     private static void mkDir(){
         GITLET_FOLDER.mkdir();
         LOG_FOLDER.mkdir();
@@ -215,6 +246,10 @@ public class GitletRepository implements Serializable {
         return refsFile;
     }
 
+    public static String getHeadPointer(){
+        File refsFile = getHeadPointerFile();
+        return readContentsAsString(refsFile);
+    }
     public static void updateHeadPointerFile(String sha1){
         //get current branch's head pointer
         File refsFile = getHeadPointerFile();
@@ -266,5 +301,16 @@ public class GitletRepository implements Serializable {
         return list;
     }
 
+    public static String getCurrentBranch(){
+        byte[] HEAD = readContents(HEAD_FILE);
+        int startIndex = 11;
+        int endIndex = HEAD.length;
+        byte[] branch = Arrays.copyOfRange(HEAD, startIndex, endIndex);
+        String branchName = new String(branch);
+        return branchName;
+    }
 
+    public static Index readStagingArea(){
+        return readObject(INDEX_FILE, Index.class);
+    }
 }

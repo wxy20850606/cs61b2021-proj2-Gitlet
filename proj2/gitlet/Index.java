@@ -12,11 +12,11 @@ import static gitlet.Utils.*;
 
 public class Index implements Serializable {
     public final Map<String,String> added;
-    public final HashSet<String> removal;
+    public final TreeSet<String> removal;
 
     public Index(){
         added = new HashMap<>();
-        removal = new HashSet<>();
+        removal = new TreeSet<>();
     }
 
     public void add(String filename,String sha1){
@@ -63,8 +63,12 @@ public class Index implements Serializable {
         return this.added;
     }
 
+    public TreeSet<String> getRemoval(){
+        return this.removal;
+    }
     public void clear(){
         added.clear();
+        removal.clear();
         save();
     }
     public boolean stagingAreaFlag(){

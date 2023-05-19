@@ -58,13 +58,17 @@ public class Main {
                 GitletRepository.find(args[1]);
                 break;
             case "status":
-                //TODO
+                validateNumArgs(args, 1);
+                validateIfInitialized();
+                GitletRepository.status();
                 break;
             case "checkout":
                 //TODO
                 break;
             case "branch":
-                //TODO
+                validateNumArgs(args, 2);
+                validateIfInitialized();
+                GitletRepository.branch(args[1]);
                 break;
             case "rm-branch":
                 //TODO

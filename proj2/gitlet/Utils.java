@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
 
+import static gitlet.GitletRepository.HEAD_FILE;
+
 
 /** Assorted utilities.
  *
