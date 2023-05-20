@@ -63,6 +63,25 @@ public class Main {
                 GitletRepository.status();
                 break;
             case "checkout":
+                switch(args.length){
+                    case 3:{
+                        if(!args[1].equals("--")){
+                            Utils.exitWithError("Incorrect operands.");
+                        }
+                        GitletRepository.checkoutFilename(args[2]);
+                    }
+                    case 4:{
+                        if(!args[2].equals("--")){
+                            Utils.exitWithError("Incorrect operands.");
+                        }
+                        GitletRepository.checkoutCommit(args[1],args[3]);
+                    }
+                    case 2:{
+                        GitletRepository.checkoutBranch(args[1]);
+                    }
+                    default:
+                        Utils.exitWithError("Incorrect operands.");
+                }
                 //TODO
                 break;
             case "branch":

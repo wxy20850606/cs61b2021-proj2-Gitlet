@@ -12,13 +12,13 @@ public class Blob implements Serializable {
     private File originalFile;
     private File blobFile;
     private String filename;
-    private byte[] content;
+    private String  content;
     private String blobFileInString;
 
     public Blob(String filename){
         this.filename = filename;
         this.originalFile = join(GitletRepository.CWD,filename);
-        this.content = readContents(this.originalFile);
+        this.content = readContentsAsString(this.originalFile);
         this.SHA1 = sha1(this.content);
     }
 
@@ -29,7 +29,9 @@ public class Blob implements Serializable {
     public String getSHA1(){
         return this.SHA1;
     }
-
+    public String getContent(){
+        return this.content;
+    }
     public Map getMap(){
         return this.blobPathToFileName;
     }

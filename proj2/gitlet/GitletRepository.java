@@ -182,7 +182,74 @@ public class GitletRepository implements Serializable {
             System.out.println(str2);
         }
         System.out.println("\n");
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        System.out.println("\n");
+        System.out.println("=== Untracked Files ===");
+        System.out.println("\n");
     }
+    public static void checkoutFilename(String filename){
+        checkoutHelper(getLastCommit(),filename);
+    }
+
+    public static void checkoutCommit(String commitID,String filename){
+        File file = createFilepathFromSha1(commitID,OBJECT_FOLDER);
+        if(!file.exists()){
+            exitWithError("No commit with that id exists.");
+        }
+        else{
+            Commit commit = readObject(file,Commit.class);
+            checkoutHelper(commit,filename);
+        }
+    }
+
+    public static void checkoutBranch(String branchName){
+    /** If no branch with that name exists  */
+        List<String> branchList = plainFilenamesIn(REFS_HEADS_FOLDER);
+        if(!branchList.contains(branchName)){
+            exitWithError("No such branch exists.");
+        }
+    /** If that branch is the current branch */
+        String HEAD = readContentsAsString(HEAD_FILE);
+        if(HEAD.contains(branchName)){
+            exitWithError("No need to checkout the current branch.");
+        }
+    /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
+        String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
+        Commit headCommit = readObject(createFilepathFromSha1(headCommitID,OBJECT_FOLDER),Commit.class);
+        for(String filename:headCommit.getMap().keySet()){
+        checkoutHelper(headCommit,filename);
+        }
+    }
+    private static void checkoutHelper(Commit commit,String filename){
+        /** if filename exist in current commit */
+        Map<String, String> map = commit.getMap();
+        if(map.containsKey(filename)){
+            File file = join(CWD,filename);
+            /** overwrite the file if it exists in the working directory */
+            String Sha1 = map.get(filename);
+            Blob blob = readObject(createFilepathFromSha1(Sha1,OBJECT_FOLDER),Blob.class);
+            if(file.exists()){
+                file.delete();
+                String sha1 = map.get(filename);
+                try{
+                    file.createNewFile();
+                }
+                catch(Exception e){
+                    System.err.println(e);
+                }
+                writeContents(file,blob.getContent());
+            }
+            /** create the file if it is not in the working directory */
+            else{
+                writeContents(file,blob.getContent());
+            }
+        }
+        /**if filename not exist in current commit */
+        else{
+            exitWithError("File does not exist in that commit.");
+        }
+    }
+
     private static void mkDir(){
         GITLET_FOLDER.mkdir();
         LOG_FOLDER.mkdir();
@@ -231,10 +298,10 @@ public class GitletRepository implements Serializable {
         }
         return a;
     }
-    public static File createFilepathFromSha1(String sha1,File file){
+    public static File createFilepathFromSha1(String sha1,File folder){
         String first2 = sha1.substring(0,2);
         String last38 = sha1.substring(2);
-        File subFolder = Utils.join(file,first2);
+        File subFolder = Utils.join(folder,first2);
         subFolder.mkdir();
         File filepath = Utils.join(subFolder,last38);
         return filepath;
