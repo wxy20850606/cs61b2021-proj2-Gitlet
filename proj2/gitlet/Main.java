@@ -90,13 +90,19 @@ public class Main {
                 GitletRepository.branch(args[1]);
                 break;
             case "rm-branch":
-                //TODO
+                validateNumArgs(args, 2);
+                validateIfInitialized();
+                GitletRepository.rmBranch(args[1]);
                 break;
             case "reset":
-                //TODO
+                validateNumArgs(args, 2);
+                validateIfInitialized();
+                GitletRepository.reset(args[1]);
                 break;
             case "merge":
-                //TODO
+                validateNumArgs(args, 2);
+                validateIfInitialized();
+                GitletRepository.merge(args[1]);
                 break;
             default:
                 Utils.exitWithError(String.format("No command with %s exists.", args[0]));

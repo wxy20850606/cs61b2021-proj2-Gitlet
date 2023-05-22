@@ -3,6 +3,8 @@ package gitlet;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static gitlet.Utils.writeContents;
@@ -96,6 +98,8 @@ public class GitletRepository implements Serializable {
         Commit newCommit = new Commit(getLastCommit().getSHA1(),message,newCommitMap);
         newCommit.makeCommit();
         index.clear();
+        /** update logs/refs/heads/branchName file to record the commit history */
+        updateCommitHistory(newCommit.getSHA1());
     }
 
     public static void rm(String filename){
@@ -185,6 +189,11 @@ public class GitletRepository implements Serializable {
         System.out.println("=== Modifications Not Staged For Commit ===");
         System.out.println("\n");
         System.out.println("=== Untracked Files ===");
+        List<String> untrackedList = new ArrayList<>(untrackedFiles());
+        Collections.sort(untrackedList);
+        for(String str3:untrackedList){
+            System.out.println(str3);
+        }
         System.out.println("\n");
     }
     public static void checkoutFilename(String filename){
@@ -203,22 +212,112 @@ public class GitletRepository implements Serializable {
     }
 
     public static void checkoutBranch(String branchName){
-    /** If no branch with that name exists  */
-        List<String> branchList = plainFilenamesIn(REFS_HEADS_FOLDER);
-        if(!branchList.contains(branchName)){
+        /** If no branch with that name exists  */
+        if(!branchExist(branchName)){
             exitWithError("No such branch exists.");
         }
-    /** If that branch is the current branch */
-        String HEAD = readContentsAsString(HEAD_FILE);
-        if(HEAD.contains(branchName)){
+        /** If that branch is the current branch */
+        if(ifOnCurrentBranch(branchName)){
             exitWithError("No need to checkout the current branch.");
         }
-    /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
+        /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
+        if(haveUntrackedFiles()){
+            exitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
+        /** recover all the files */
         String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
         Commit headCommit = readObject(createFilepathFromSha1(headCommitID,OBJECT_FOLDER),Commit.class);
         for(String filename:headCommit.getMap().keySet()){
         checkoutHelper(headCommit,filename);
         }
+        /** update the HEAD file*/
+        String head = "refs/heads/" + branchName;
+        writeContents(HEAD_FILE,head);
+    }
+
+    public static void rmBranch(String branchName){
+        /** If a branch with the given name does not exist, aborts.*/
+        if(!branchExist(branchName)){
+            exitWithError("A branch with that name does not exist.");
+        }
+        /** If you try to remove the branch you’re currently on, aborts.*/
+        else if(ifOnCurrentBranch(branchName)){
+            exitWithError("Cannot remove the current branch.");
+        }
+        /** Deletes the branch with the given name. */
+        else{
+             File branchFile = join(REFS_HEADS_FOLDER,branchName);
+             branchFile.delete();
+        }
+    }
+
+    public static void reset(String commitID){
+        /** If no commit with the given id exist */
+        File file = createFilepathFromSha1(commitID,OBJECT_FOLDER);
+        if(!file.exists()){
+            exitWithError("No commit with that id exists.");
+        }
+        /** If a working file is untracked in the current branch */
+        if(haveUntrackedFiles()){
+            exitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
+        writeContents(HEAD_FILE,commitID);
+        Commit commit = readObject(createFilepathFromSha1(commitID,OBJECT_FOLDER),Commit.class);
+        for(String filename:commit.getMap().keySet()){
+            checkoutHelper(commit,filename);
+        }
+    }
+
+    public static void merge(String branchName){
+      /** precheck */
+        /** If there are staged additions or removals present */
+        if(!readStagingArea().stagingAreaFlag()){
+            exitWithError("You have uncommitted changes.");
+        }
+        /** If a branch with the given name does not exist,*/
+        if(!join(REFS_HEADS_FOLDER,branchName).exists())
+        {
+            exitWithError("A branch with that name does not exist.");
+        }
+        /** If attempting to merge a branch with itself */
+        if(branchName.equals(getCurrentBranch())){
+            exitWithError("Cannot merge a branch with itself.");
+        }
+        /** If merge would generate an error because the commit that it does has no changes in it,just let the normal commit error message for this go through.  */
+        //pass
+        /** If an untracked file in the current commit would be overwritten or deleted by the merge */
+        if(untrackedFiles() != null)
+        {
+            exitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
+        /** If the split point is the same commit as the given branch */
+        String splitPoint = getSplitCommit(branchName);
+        String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
+        String headOfCurrentBranch = getHeadPointer();
+        if(splitPoint.equals(headOfGivenBranch)){
+            exitWithError("Given branch is an ancestor of the current branch.");
+        }
+        /** If the split point is the current branch */
+        if(splitPoint.equals(headOfCurrentBranch)){
+            checkoutBranch(branchName);
+            exitWithError("Current branch fast-forwarded.");
+        }
+        /** get three commits in order to process 8 steps */
+        Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint,OBJECT_FOLDER),Commit.class);
+        Commit currentHeadCommit = getLastCommit();
+        Commit targetBranchCommit = readObject(join(REFS_HEADS_FOLDER,branchName),Commit.class);
+        Map<String,String> splitPointCommitMap = splitPointCommit.getMap();
+        Map<String,String> currentHeadCommitMap = currentHeadCommit.getMap();
+        Map<String,String> targetBranchCommitMap = targetBranchCommit.getMap();
+        /** get all filename keys through combine all three map*/
+        Set<String> allFileNameSet = new HashSet<>();
+        allFileNameSet.addAll(splitPointCommit.getMap().keySet());
+        allFileNameSet.addAll(currentHeadCommit.getMap().keySet());
+        allFileNameSet.addAll(targetBranchCommit.getMap().keySet());
+        /** get new merge map according to 8 steps */
+        Map<String, String> newMap = getNewMergeMap(branchName);
+        /** compare to current branch head commit map to get the difference*/
+        /** commit */
     }
     private static void checkoutHelper(Commit commit,String filename){
         /** if filename exist in current commit */
@@ -312,7 +411,6 @@ public class GitletRepository implements Serializable {
         File refsFile = join(GITLET_FOLDER,head);
         return refsFile;
     }
-
     public static String getHeadPointer(){
         File refsFile = getHeadPointerFile();
         return readContentsAsString(refsFile);
@@ -379,5 +477,123 @@ public class GitletRepository implements Serializable {
 
     public static Index readStagingArea(){
         return readObject(INDEX_FILE, Index.class);
+    }
+
+    private static boolean branchExist(String branchName){
+        List<String> branchList = plainFilenamesIn(REFS_HEADS_FOLDER);
+        return branchList.contains(branchName);
+    }
+
+    private static boolean ifOnCurrentBranch(String branchName){
+        String HEAD = readContentsAsString(HEAD_FILE);
+        return HEAD.contains(branchName);
+    }
+
+    private static List<String> untrackedFiles(){
+        List<String> list = new ArrayList<>();
+        map = getLastCommit().getMap();
+        Map<String,String> stagingMap = readStagingArea().getMap();
+        List<String> fileList = plainFilenamesIn(CWD);
+        for(String file:fileList){
+            if(map.containsKey(file) || stagingMap.containsKey(file)){
+                continue;
+            }
+            else{
+                list.add(file);
+            }
+        }
+        return list;
+    }
+
+    private static boolean haveUntrackedFiles(){
+        return untrackedFiles() != null;
+    }
+
+    public static void updateCommitHistory(String commitID){
+        File file = join(LOG_REFS_HEAD_FOLDER,getCurrentBranch());
+        String oldHistory = readContentsAsString(file);
+        String newHistory = commitID + "\n"+ oldHistory;
+        writeContents(file,newHistory);
+    }
+    private static String getSplitCommit(String branchName){
+        String splitPoint = new String();
+        String currentBranch = getCurrentBranch();
+        List<String> currentBranchHistory = readCommitHistoryToList(join(LOG_REFS_HEAD_FOLDER,currentBranch));
+        String mergeBranch = branchName;
+        List<String> mergeBranchHistory = readCommitHistoryToList(join(LOG_REFS_HEAD_FOLDER,mergeBranch));
+        for(String commitId:currentBranchHistory){
+            if(mergeBranchHistory.contains(commitId)){
+                splitPoint = commitId;
+                break;
+            }
+        }
+        return splitPoint;
+    }
+
+    private static List<String> readCommitHistoryToList(File file){
+        List commitHistoryList = new ArrayList();
+        Path filePath = file.toPath();
+        List<String> lines = readLinesFromFile(filePath);
+        for (String line : lines) {
+            commitHistoryList.add(line);
+        }
+        return commitHistoryList;
+    }
+
+    private static List<String> readLinesFromFile(Path filePath) {
+        List<String> lines = null;
+        try {
+            lines = Files.readAllLines(filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lines;
+    }
+
+    private static Map<String,String> getNewMergeMap(String branchName) {
+        Map<String, String> newMap = new HashMap<>();
+        /** get three commits in order to process 8 steps */
+        String splitPoint = getSplitCommit(branchName);
+        Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint, OBJECT_FOLDER), Commit.class);
+        Commit currentHeadCommit = getLastCommit();
+        Commit targetBranchCommit = readObject(join(REFS_HEADS_FOLDER, branchName), Commit.class);
+        Map<String, String> splitPointCommitMap = splitPointCommit.getMap();
+        Map<String, String> currentHeadCommitMap = currentHeadCommit.getMap();
+        Map<String, String> targetBranchCommitMap = targetBranchCommit.getMap();
+        /** get all filename keys through combine all three map*/
+        Set<String> allFileNameSet = new HashSet<>();
+        allFileNameSet.addAll(splitPointCommit.getMap().keySet());
+        allFileNameSet.addAll(currentHeadCommit.getMap().keySet());
+        allFileNameSet.addAll(targetBranchCommit.getMap().keySet());
+        /** check each file according to 8 steps */
+        for (String fileName : allFileNameSet) {
+            /**if in splitPoint commit */
+            if (splitPointCommitMap.containsKey(fileName)) {
+                /** if removed in current branch head commit or removed in target branch head commit */
+                if (!currentHeadCommitMap.containsKey(fileName) || !targetBranchCommitMap.containsKey(fileName)) {
+                    newMap.put(fileName, null);
+                } else {
+                    /** files in two head commits are different from splitPoint commit, means there is a conflict*/
+                    boolean x = splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName);
+                    boolean y = splitPointCommitMap.get(fileName) != targetBranchCommitMap.get(fileName);
+                    if (x && y) {
+                        //handle conflict
+                        continue;
+                    } else if (x) {
+                        newMap.put(fileName, currentHeadCommitMap.get(fileName));
+                    } else if (y) {
+                        newMap.put(fileName, targetBranchCommitMap.get(fileName));
+                    }
+                }
+            }
+            /** if not exist in splitPoint commit*/
+            else {
+                if (currentHeadCommitMap.containsKey(fileName)) {
+                    newMap.put(fileName, currentHeadCommitMap.get(fileName));
+                } else {
+                    newMap.put(fileName, targetBranchCommitMap.get(fileName));
+                }
+            }
+        }
     }
 }
