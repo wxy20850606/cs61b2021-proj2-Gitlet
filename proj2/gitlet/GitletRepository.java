@@ -90,10 +90,8 @@ public class GitletRepository implements Serializable {
         for(String x : removalList){
             map.remove(x);
         }
-        //System.out.println("staging map:" + stagingMap.toString());
         /** last commit map add stagingarea-added*/
         Map<String,String> newCommitMap = combine(map,stagingMap);
-        //System.out.println("new map" + newCommitMap.toString());
         /** make commit*/
         Commit newCommit = new Commit(getLastCommit().getSHA1(),message,newCommitMap);
         newCommit.makeCommit();
@@ -195,7 +193,6 @@ public class GitletRepository implements Serializable {
             if(!str3.equals(".DS_Store")){
             System.out.println(str3);}
         }
-        System.out.println(untrackedFiles().size());
         System.out.println("\n");
     }
     public static void checkoutFilename(String filename){
