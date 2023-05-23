@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.File;
+import static gitlet.Utils.*;
 
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
@@ -15,7 +16,7 @@ public class Main {
 
         // TODO: what if args is empty?
         if (args.length == 0) {
-            Utils.exitWithError("Please enter a command.");
+            exit("Please enter a command.");
         }
         String firstArg = args[0];
         switch(firstArg) {
@@ -66,13 +67,13 @@ public class Main {
                 switch(args.length){
                     case 3:
                         if(!args[1].equals("--")){
-                            Utils.exitWithError("Incorrect operands.");
+                            exit("Incorrect operands.");
                         }
                         GitletRepository.checkoutFilename(args[2]);
                         break;
                     case 4:
                         if(!args[2].equals("--")){
-                            Utils.exitWithError("Incorrect operands.");
+                            exit("Incorrect operands.");
                         }
                         GitletRepository.checkoutCommit(args[1],args[3]);
                         break;
@@ -80,7 +81,7 @@ public class Main {
                         GitletRepository.checkoutBranch(args[1]);
                         break;
                     default:
-                        Utils.exitWithError("Incorrect operands.");
+                        exit("Incorrect operands.");
                 }
                 break;
             case "branch":
@@ -104,7 +105,7 @@ public class Main {
                 GitletRepository.merge(args[1]);
                 break;
             default:
-                Utils.exitWithError(String.format("No command with %s exists.", args[0]));
+                exit(String.format("No command with %s exists.", args[0]));
         }
         return;
     }
@@ -118,26 +119,26 @@ public class Main {
      */
     public static void validateNumArgs(String[] args, int n) {
         if (args.length != n) {
-            Utils.exitWithError("Incorrect operands.");
+            exit("Incorrect operands.");
         }
     }
 
     public static void validateMessage(String[] args, int n) {
         if (args.length != n) {
-            Utils.exitWithError("Please enter a commit message.");
+            exit("Please enter a commit message.");
         }
     }
 
     //case:Not in an initialized Gitlet directory.(check if current directory containing a .gitlet subdirectory)TODO
     public static void validateIfInitialized() {
         if (!GitletRepository.GITLET_FOLDER.exists()) {
-            Utils.exitWithError("Not in an initialized Gitlet directory.");
+            exit("Not in an initialized Gitlet directory.");
         }
     }
 
     public static void validateNotInited() {
         if (GitletRepository.GITLET_FOLDER.exists()) {
-            Utils.exitWithError("A Gitlet version-control system already exists in the current directory.");
+            exit("A Gitlet version-control system already exists in the current directory.");
         }
     }
 }

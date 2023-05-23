@@ -61,7 +61,7 @@ public class GitletRepository implements Serializable {
     public static void add(String filename){
         /** given filename is not exist*/
         if(!checkFileExistence(filename)){
-            Utils.exitWithError("File does not exist.");
+            exit("File does not exist.");
         };
         Blob blob = new Blob(filename);
         index = readStagingArea();
@@ -70,8 +70,11 @@ public class GitletRepository implements Serializable {
             System.exit(0);
         };
         /** Staging an already-staged file overwrites the previous entry*/
-        if(index.getMap().containsKey(filename)){
+        if(index.getMap().containsKey(filename) && blob.getSHA1() != index.getMap().get(filename)){
             index.add(filename,blob.getSHA1());
+        }
+        if(index.getMap().containsKey(filename) && blob.getSHA1() == index.getMap().get(filename)){
+            System.exit(0);
         }
         /** normal stage*/
         blob.save();
@@ -82,7 +85,7 @@ public class GitletRepository implements Serializable {
         index = readObject(INDEX_FILE,Index.class);
         /** If no files have been staged, abort.*/
         if(index.stagingAreaFlag()){
-            Utils.exitWithError("No changes added to the commit.");
+            exit("No changes added to the commit.");
         }
         Map<String,String> stagingMap = index.getMap();
         /** last commit map add stagingArea map*/
@@ -114,7 +117,7 @@ public class GitletRepository implements Serializable {
         }
         /** If the file is neither staged nor tracked by the head commit, print the error message No reason to remove the file. */
         else{
-            Utils.exitWithError("No reason to remove the file.");
+            exit("No reason to remove the file.");
         }
     }
 
@@ -151,7 +154,7 @@ public class GitletRepository implements Serializable {
             }
         }
         if (count == 0) {
-                exitWithError("Found no commit with that message.");
+                exit("Found no commit with that message.");
             }
     }
 
@@ -216,7 +219,7 @@ public class GitletRepository implements Serializable {
     public static void checkoutCommit(String commitID,String filename){
         File file = createFilepathFromSha1(commitID,OBJECT_FOLDER);
         if(!file.exists()){
-            exitWithError("No commit with that id exists.");
+            exit("No commit with that id exists.");
         }
         else{
             Commit commit = readObject(file,Commit.class);
@@ -228,15 +231,15 @@ public class GitletRepository implements Serializable {
 
         /** If no branch with that name exists  */
         if(!branchExist(branchName)){
-            exitWithError("No such branch exists.");
+            exit("No such branch exists.");
         }
         /** If that branch is the current branch */
         if(ifOnCurrentBranch(branchName)){
-            exitWithError("No need to checkout the current branch.");
+            exit("No need to checkout the current branch.");
         }
         /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
         if(haveUntrackedFiles()){
-            exitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+            exit("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         /** recover all the files */
         String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
@@ -260,11 +263,11 @@ public class GitletRepository implements Serializable {
     public static void rmBranch(String branchName){
         /** If a branch with the given name does not exist, aborts.*/
         if(!branchExist(branchName)){
-            exitWithError("A branch with that name does not exist.");
+            exit("A branch with that name does not exist.");
         }
         /** If you try to remove the branch you’re currently on, aborts.*/
         else if(ifOnCurrentBranch(branchName)){
-            exitWithError("Cannot remove the current branch.");
+            exit("Cannot remove the current branch.");
         }
         /** Deletes the branch with the given name. */
         else{
@@ -277,11 +280,11 @@ public class GitletRepository implements Serializable {
         /** If no commit with the given id exist */
         File file = createFilepathFromSha1(commitID,OBJECT_FOLDER);
         if(!file.exists()){
-            exitWithError("No commit with that id exists.");
+            exit("No commit with that id exists.");
         }
         /** If a working file is untracked in the current branch */
         if(haveUntrackedFiles()){
-            exitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+            exit("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         writeContents(HEAD_FILE,commitID);
         Commit commit = readObject(createFilepathFromSha1(commitID,OBJECT_FOLDER),Commit.class);
@@ -295,35 +298,35 @@ public class GitletRepository implements Serializable {
       /** precheck */
         /** If there are staged additions or removals present */
         if(!readStagingArea().stagingAreaFlag()){
-            exitWithError("You have uncommitted changes.");
+            exit("You have uncommitted changes.");
         }
         /** If a branch with the given name does not exist,*/
         if(!join(REFS_HEADS_FOLDER,branchName).exists())
         {
-            exitWithError("A branch with that name does not exist.");
+            exit("A branch with that name does not exist.");
         }
         /** If attempting to merge a branch with itself */
         if(branchName.equals(getCurrentBranch())){
-            exitWithError("Cannot merge a branch with itself.");
+            exit("Cannot merge a branch with itself.");
         }
         /** If merge would generate an error because the commit that it does has no changes in it,just let the normal commit error message for this go through.  */
         //pass
         /** If an untracked file in the current commit would be overwritten or deleted by the merge */
         if(haveUntrackedFiles())
         {
-            exitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
+            exit("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         /** If the split point is the same commit as the given branch */
         String splitPoint = getSplitCommit(branchName);
         String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
         String headOfCurrentBranch = getHeadPointer();
         if(splitPoint.equals(headOfGivenBranch)){
-            exitWithError("Given branch is an ancestor of the current branch.");
+            exit("Given branch is an ancestor of the current branch.");
         }
         /** If the split point is the current branch */
         if(splitPoint.equals(headOfCurrentBranch)){
             checkoutBranch(branchName);
-            exitWithError("Current branch fast-forwarded.");
+            exit("Current branch fast-forwarded.");
         }
         /** get three commits in order to process 8 steps */
         Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint,OBJECT_FOLDER),Commit.class);
@@ -396,7 +399,7 @@ public class GitletRepository implements Serializable {
         }
         /**if filename not exist in current commit */
         else{
-            exitWithError("File does not exist in that commit.");
+            exit("File does not exist in that commit.");
         }
     }
 
