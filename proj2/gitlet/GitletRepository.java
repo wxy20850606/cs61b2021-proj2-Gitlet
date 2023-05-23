@@ -108,12 +108,14 @@ public class GitletRepository implements Serializable {
         index = readObject(INDEX_FILE,Index.class);
         currentCommit = getLastCommit();
         if(index.getMap().containsKey(filename)){
-            //index.stageRemoval(filename);
-            index.unStage(filename);
+            index.stageRemoval(filename);
+            index.save();
+            //index.unStage(filename);
         }
         /** If the file is tracked in the current commit, stage it for removal ,delete*/
         else if(currentCommit.getMap().containsKey(filename)){
             index.stageRemoval(filename);
+            index.save();
         }
         /** If the file is neither staged nor tracked by the head commit, print the error message No reason to remove the file. */
         else{
@@ -159,6 +161,10 @@ public class GitletRepository implements Serializable {
     }
 
     public static void branch(String branchName){
+        List<String> branchNameList = plainFilenamesIn(REFS_HEADS_FOLDER);
+        if(branchNameList.contains(branchName)){
+            exit("A branch with that name already exists.");
+        }
         Branch newbranch = new Branch(branchName);
         newbranch.create();
     }
@@ -179,8 +185,8 @@ public class GitletRepository implements Serializable {
         }
         statusBuilder.append("\n");
 
-        // removed files
-        statusBuilder.append("=== Removed Files ===").append("\n");
+        // Staged files
+        statusBuilder.append("=== Staged Files ===").append("\n");
         List<String> list = new ArrayList<>(readStagingArea().getMap().keySet());
         Collections.sort(list);
         for (String str1 : list){
@@ -497,7 +503,6 @@ public class GitletRepository implements Serializable {
         String allLog = oldLog +"\n"+"==="+"\n"+"commit "+ x.getSHA1() + "\n" + "Date:" + x.getTimestamp().toString() + "\n" + x.getMessage() ;
         writeContents(LOG_HEAD_FILE,allLog);
     }
-
     public static Blob getCurrentBlob() {
         return currentBlob;
     }

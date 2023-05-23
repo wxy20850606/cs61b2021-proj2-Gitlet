@@ -105,9 +105,8 @@ public class Main {
                 GitletRepository.merge(args[1]);
                 break;
             default:
-                exit(String.format("No command with %s exists.", args[0]));
+                exit("No command with "+ args[0] +" exists.");
         }
-        return;
     }
     /**
      * Checks the number of arguments versus the expected number,
