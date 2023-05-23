@@ -269,6 +269,7 @@ public class GitletRepository implements Serializable {
     }
 
     public static void merge(String branchName){
+        index = readStagingArea();
       /** precheck */
         /** If there are staged additions or removals present */
         if(!readStagingArea().stagingAreaFlag()){
@@ -317,7 +318,35 @@ public class GitletRepository implements Serializable {
         /** get new merge map according to 8 steps */
         Map<String, String> newMap = getNewMergeMap(branchName);
         /** compare to current branch head commit map to get the difference*/
-        /** commit */
+        for(String filename:allFileNameSet){
+            /** no change, pass */
+            if(currentHeadCommitMap.get(filename) == newMap.get(filename)){
+                continue;
+            }
+            /** both are deleted, pass */
+            else if(!currentHeadCommitMap.containsKey(filename) && newMap.get(filename) == null){
+                continue;
+            }
+            /** stage for removal*/
+            else if(currentHeadCommitMap.containsKey(filename) && newMap.get(filename) == null){
+                index.removal.add(filename);
+                join(CWD,filename).delete();
+            }
+            /** stage for add */
+            else{
+                String sha1 = newMap.get(filename);
+                index.add(filename,sha1);
+                /** change the working directory */
+                replaceCWD(filename,sha1);
+            }
+        }
+        /** make merge commit */
+        Map<String,String> newCommitMap = removeNullValue(newMap);
+        Commit mergeCommit = new Commit(currentHeadCommit,targetBranchCommit,getCurrentBranch(),branchName,newCommitMap);
+        mergeCommit.makeCommit();
+        //Commit currentHeadCommit,Commit targetBranchHead,String currentBranch,String targetBranch,Map<String,String> newmap
+        /** clear staging area*/
+        index.clear();
     }
     private static void checkoutHelper(Commit commit,String filename){
         /** if filename exist in current commit */
@@ -551,6 +580,7 @@ public class GitletRepository implements Serializable {
     }
 
     private static Map<String,String> getNewMergeMap(String branchName) {
+        boolean conflictFlag = false;
         Map<String, String> newMap = new HashMap<>();
         /** get three commits in order to process 8 steps */
         String splitPoint = getSplitCommit(branchName);
@@ -577,8 +607,8 @@ public class GitletRepository implements Serializable {
                     boolean x = splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName);
                     boolean y = splitPointCommitMap.get(fileName) != targetBranchCommitMap.get(fileName);
                     if (x && y) {
-                        //handle conflict
-                        continue;
+                        newMap.put(fileName,handelMergeConflict(fileName,currentHeadCommitMap,targetBranchCommitMap));
+                        conflictFlag = true;
                     } else if (x) {
                         newMap.put(fileName, currentHeadCommitMap.get(fileName));
                     } else if (y) {
@@ -588,12 +618,50 @@ public class GitletRepository implements Serializable {
             }
             /** if not exist in splitPoint commit*/
             else {
-                if (currentHeadCommitMap.containsKey(fileName)) {
+                if (currentHeadCommitMap.containsKey(fileName) && !targetBranchCommitMap.containsKey(fileName)) {
                     newMap.put(fileName, currentHeadCommitMap.get(fileName));
-                } else {
+                }
+                else if(!currentHeadCommitMap.containsKey(fileName) && targetBranchCommitMap.containsKey(fileName)) {
                     newMap.put(fileName, targetBranchCommitMap.get(fileName));
+                }
+                else{
+                    newMap.put(fileName,handelMergeConflict(fileName,currentHeadCommitMap,targetBranchCommitMap));
+                    conflictFlag = true;
                 }
             }
         }
+        if(conflictFlag == true){
+            System.out.println("Encountered a merge conflict.");}
+        return newMap;
+    }
+
+    private static String handelMergeConflict(String filename,Map<String,String> a,Map<String,String> b){
+        String commitIDInCurrentBranch = a.get(filename);
+        String commitIDInTargetBranch = b.get(filename);
+        String contentInCurrentBranch = readContentsAsString(createFilepathFromSha1(commitIDInCurrentBranch,OBJECT_FOLDER));
+        String contentInTargetBranch = readContentsAsString(createFilepathFromSha1(commitIDInTargetBranch,OBJECT_FOLDER));
+        String conflictContent = "<<<<<<< HEAD" + "\n" + contentInCurrentBranch +"\n" +"=======" + "\n" + contentInTargetBranch +"\n"+">>>>>>>";
+        String blobID = sha1(conflictContent);
+        /** save conflict file*/
+        writeContents(createFilepathFromSha1(blobID,OBJECT_FOLDER),conflictContent);
+        return blobID;
+    }
+
+    private static void replaceCWD(String filename,String sha1){
+        /** overwrite exist file*/
+        File file = join(CWD,filename);
+        String content = readContentsAsString(createFilepathFromSha1(sha1,OBJECT_FOLDER));
+        writeContents(file,content);
+    }
+
+    private static Map<String,String> removeNullValue(Map<String,String> map){
+        Iterator<Map.Entry<String, String>> iterator = map.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
+            if (entry.getValue() == null) {
+                iterator.remove();
+            }
+        }
+        return map;
     }
 }

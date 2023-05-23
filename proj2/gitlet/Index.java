@@ -74,4 +74,6 @@ public class Index implements Serializable {
     public boolean stagingAreaFlag(){
         return (added.isEmpty() && removal.isEmpty());
     }
+
+
 }

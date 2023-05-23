@@ -62,8 +62,17 @@ public class Commit implements Serializable {
         this.parent1 = parent1;
         this.timestamp = formatDate();
         this.filenameTofilePathMap = map;
-        this.SHA1 = sha1(parent1 + message + timestamp + map.toString());
+        this.SHA1 = sha1(parent1 + message + timestamp.toString() + filenameTofilePathMap.toString());
         this.commitFile = createFilepathFromSha1(SHA1,OBJECT_FOLDER);
+    }
+    public Commit(Commit currentHeadCommit,Commit targetBranchHead,String currentBranch,String targetBranch,Map<String,String> newmap){
+        this.message = "Merged "+ targetBranch + " into " + currentBranch +".";
+        this.parent1 = currentHeadCommit.SHA1;
+        this.parent2 = targetBranchHead.SHA1;
+        this.filenameTofilePathMap = newmap;
+        this.timestamp = formatDate();
+        this.SHA1 = sha1(this.parent1 +this.parent2 + this.message + this.timestamp.toString() + filenameTofilePathMap.toString());
+        this.commitFile = createFilepathFromSha1(this.SHA1,OBJECT_FOLDER);
     }
     public String getMessage(){
         return this.message;
