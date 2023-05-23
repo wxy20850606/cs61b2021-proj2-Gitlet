@@ -192,8 +192,10 @@ public class GitletRepository implements Serializable {
         List<String> untrackedList = new ArrayList<>(untrackedFiles());
         Collections.sort(untrackedList);
         for(String str3:untrackedList){
-            System.out.println(str3);
+            if(!str3.equals(".DS_Store")){
+            System.out.println(str3);}
         }
+        System.out.println(untrackedFiles().size());
         System.out.println("\n");
     }
     public static void checkoutFilename(String filename){
@@ -212,6 +214,7 @@ public class GitletRepository implements Serializable {
     }
 
     public static void checkoutBranch(String branchName){
+
         /** If no branch with that name exists  */
         if(!branchExist(branchName)){
             exitWithError("No such branch exists.");
@@ -227,8 +230,16 @@ public class GitletRepository implements Serializable {
         /** recover all the files */
         String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
         Commit headCommit = readObject(createFilepathFromSha1(headCommitID,OBJECT_FOLDER),Commit.class);
-        for(String filename:headCommit.getMap().keySet()){
+        Map<String,String> targetMap = headCommit.getMap();
+        for(String filename:targetMap.keySet()){
         checkoutHelper(headCommit,filename);
+        }
+        /** delete if exist in current branch but not in the given branch */
+        Commit currentCommit = getLastCommit();
+        for(String filename:currentCommit.getMap().keySet()){
+            if(!targetMap.containsKey(filename)){
+                restrictedDelete(join(CWD,filename));
+            }
         }
         /** update the HEAD file*/
         String head = "refs/heads/" + branchName;
@@ -287,7 +298,7 @@ public class GitletRepository implements Serializable {
         /** If merge would generate an error because the commit that it does has no changes in it,just let the normal commit error message for this go through.  */
         //pass
         /** If an untracked file in the current commit would be overwritten or deleted by the merge */
-        if(untrackedFiles() != null)
+        if(haveUntrackedFiles())
         {
             exitWithError("There is an untracked file in the way; delete it, or add and commit it first.");
         }
@@ -462,7 +473,7 @@ public class GitletRepository implements Serializable {
     public static void printCommitLog(Commit x){
         System.out.println("===");
         System.out.println("Commit " + x.getSHA1());
-        System.out.println("Date:" + x.getTimestamp().toString());
+        System.out.println("Date: " + x.getTimestamp().toString());
         System.out.println(x.getMessage());
         System.out.println();
     }
@@ -523,6 +534,9 @@ public class GitletRepository implements Serializable {
         map = getLastCommit().getMap();
         Map<String,String> stagingMap = readStagingArea().getMap();
         List<String> fileList = plainFilenamesIn(CWD);
+        /**if(fileList.contains(".DS_Store")){
+            fileList.remove(".DS_Store");
+        } */
         for(String file:fileList){
             if(map.containsKey(file) || stagingMap.containsKey(file)){
                 continue;
@@ -535,7 +549,8 @@ public class GitletRepository implements Serializable {
     }
 
     private static boolean haveUntrackedFiles(){
-        return untrackedFiles() != null;
+        /** have .DS_Store so the size is 1*/
+        return untrackedFiles().size() > 1;
     }
 
     public static void updateCommitHistory(String commitID){
@@ -560,7 +575,7 @@ public class GitletRepository implements Serializable {
     }
 
     private static List<String> readCommitHistoryToList(File file){
-        List commitHistoryList = new ArrayList();
+        List<String> commitHistoryList = new ArrayList<String>();
         Path filePath = file.toPath();
         List<String> lines = readLinesFromFile(filePath);
         for (String line : lines) {
