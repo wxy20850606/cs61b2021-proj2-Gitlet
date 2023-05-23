@@ -30,7 +30,6 @@ public class Index implements Serializable {
         /** remove the file in the working directory */
         File removalFile = join(CWD,filename);
         restrictedDelete(removalFile);
-
     }
 
     public void stageRemoval(String filename){
@@ -41,11 +40,10 @@ public class Index implements Serializable {
     }
 
     public void unStage(String filename){
-        if(addedFilesNamesSet().contains(filename)){
         added.remove(filename);
+        File removalFile = join(CWD,filename);
+        restrictedDelete(removalFile);
         save();
-        }
-        return;
     }
     public Set<String> addedFilesNamesSet(){
         Set<String> keySet = added.keySet();

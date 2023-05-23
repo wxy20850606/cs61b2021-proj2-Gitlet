@@ -44,8 +44,6 @@ public class GitletRepository implements Serializable {
     public static final File REFS_HEADS_FOLDER = join(REFS_FOLDER,"heads");
     public static final File REFS_HEAD_MASTER_FILE = join(REFS_HEADS_FOLDER, "master");
 
-    //static final File REMOVE_FOLDER = join(STEAGE_FOLDER,"remove");
-
     private static Index index;
     private static Commit currentCommit;
     private static Branch currentBranch;
@@ -61,37 +59,39 @@ public class GitletRepository implements Serializable {
     }
 
     public static void add(String filename){
+        /** given filename is not exist*/
         if(!checkFileExistence(filename)){
             Utils.exitWithError("File does not exist.");
         };
-        /** If the current working version of the file is identical to the version in the current commit, do not stage it to be added*/
-
         Blob blob = new Blob(filename);
-        if(checkIfBlobExist(filename,blob.getSHA1())) {
+        index = readStagingArea();
+        /** If the current working version of the file is identical to the version in the current commit, do not stage it to be added*/
+        if(blob.getSHA1() == getLastCommit().getMap().get(filename)){
             System.exit(0);
+        };
+        /** Staging an already-staged file overwrites the previous entry*/
+        if(index.getMap().containsKey(filename)){
+            index.add(filename,blob.getSHA1());
         }
-        index = readObject(INDEX_FILE, Index.class);
+        /** normal stage*/
         blob.save();
-        index.add(blob.getFilename(),blob.getSHA1());
+        index.add(filename,blob.getSHA1());
     }
 
     public static void commit(String message){
-        /** */
         index = readObject(INDEX_FILE,Index.class);
-        /** get last commit map*/
+        /** If no files have been staged, abort.*/
         if(index.stagingAreaFlag()){
             Utils.exitWithError("No changes added to the commit.");
         }
-        map = getLastCommitMap();
-        /** get staging area map*/
         Map<String,String> stagingMap = index.getMap();
+        /** last commit map add stagingArea map*/
+        Map<String,String> newCommitMap = combine(getLastCommitMap(),stagingMap);
         /** minus rm file*/
         TreeSet<String> removalList =  index.removal;
         for(String x : removalList){
-            map.remove(x);
+            newCommitMap.remove(x);
         }
-        /** last commit map add stagingarea-added*/
-        Map<String,String> newCommitMap = combine(map,stagingMap);
         /** make commit*/
         Commit newCommit = new Commit(getLastCommit().getSHA1(),message,newCommitMap);
         newCommit.makeCommit();
@@ -105,7 +105,8 @@ public class GitletRepository implements Serializable {
         index = readObject(INDEX_FILE,Index.class);
         currentCommit = getLastCommit();
         if(index.getMap().containsKey(filename)){
-            index.stageRemoval(filename);
+            //index.stageRemoval(filename);
+            index.unStage(filename);
         }
         /** If the file is tracked in the current commit, stage it for removal ,delete*/
         else if(currentCommit.getMap().containsKey(filename)){
@@ -160,40 +161,53 @@ public class GitletRepository implements Serializable {
     }
 
     public static void status(){
-        System.out.println("=== Branches ===");
+        StringBuilder statusBuilder = new StringBuilder();
+        // branches
+        statusBuilder.append("=== Branches ===").append("\n");
         List<String> filenames = plainFilenamesIn(REFS_HEADS_FOLDER);
         Collections.sort(filenames);
         for (String str : filenames) {
             if(str.equals(getCurrentBranch())){
-                System.out.println("*" + str);
+                statusBuilder.append("*").append(str).append("\n");
             }
             else{
-                System.out.println(str);
+                statusBuilder.append(str).append("\n");
             }
         }
-        System.out.println("\n");
-        System.out.println("=== Staged Files ===");
+        statusBuilder.append("\n");
+
+        // removed files
+        statusBuilder.append("=== Removed Files ===").append("\n");
         List<String> list = new ArrayList<>(readStagingArea().getMap().keySet());
         Collections.sort(list);
         for (String str1 : list){
-            System.out.println(str1);
+            statusBuilder.append(str1).append("\n");
         }
-        System.out.println("\n");
-        System.out.println("=== Removed Files ===");
+        statusBuilder.append("\n");
+
+        // removed files
+        statusBuilder.append("=== Removed Files ===").append("\n");
         for(String str2:readStagingArea().getRemoval()){
-            System.out.println(str2);
+            statusBuilder.append(str2).append("\n");
         }
-        System.out.println("\n");
-        System.out.println("=== Modifications Not Staged For Commit ===");
-        System.out.println("\n");
-        System.out.println("=== Untracked Files ===");
+        statusBuilder.append("\n");
+
+        // modifications not staged for commit
+        statusBuilder.append("=== Modifications Not Staged For Commit ===").append("\n");
+        statusBuilder.append("\n");
+
+        // untracked files
+        statusBuilder.append("=== Untracked Files ===").append("\n");
         List<String> untrackedList = new ArrayList<>(untrackedFiles());
         Collections.sort(untrackedList);
         for(String str3:untrackedList){
             if(!str3.equals(".DS_Store")){
-            System.out.println(str3);}
+                statusBuilder.append(str3).append("\n");
+            }
         }
-        System.out.println("\n");
+        statusBuilder.append("\n");
+
+        System.out.print(statusBuilder);
     }
     public static void checkoutFilename(String filename){
         checkoutHelper(getLastCommit(),filename);
@@ -314,7 +328,7 @@ public class GitletRepository implements Serializable {
         /** get three commits in order to process 8 steps */
         Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint,OBJECT_FOLDER),Commit.class);
         Commit currentHeadCommit = getLastCommit();
-        Commit targetBranchCommit = readObject(join(REFS_HEADS_FOLDER,branchName),Commit.class);
+        Commit targetBranchCommit = readObject(createFilepathFromSha1(headOfGivenBranch,OBJECT_FOLDER),Commit.class);
         Map<String,String> splitPointCommitMap = splitPointCommit.getMap();
         Map<String,String> currentHeadCommitMap = currentHeadCommit.getMap();
         Map<String,String> targetBranchCommitMap = targetBranchCommit.getMap();
@@ -469,7 +483,7 @@ public class GitletRepository implements Serializable {
 
     public static void printCommitLog(Commit x){
         System.out.println("===");
-        System.out.println("Commit " + x.getSHA1());
+        System.out.println("commit " + x.getSHA1());
         System.out.println("Date: " + x.getTimestamp().toString());
         System.out.println(x.getMessage());
         System.out.println();
@@ -477,7 +491,7 @@ public class GitletRepository implements Serializable {
 
     public static void writeToGlobalLog(Commit x){
         String oldLog = readContentsAsString(LOG_HEAD_FILE);
-        String allLog = oldLog +"\n"+"==="+"\n"+"Commit "+ x.getSHA1() + "\n" + "Date:" + x.getTimestamp().toString() + "\n" + x.getMessage() ;
+        String allLog = oldLog +"\n"+"==="+"\n"+"commit "+ x.getSHA1() + "\n" + "Date:" + x.getTimestamp().toString() + "\n" + x.getMessage() ;
         writeContents(LOG_HEAD_FILE,allLog);
     }
 
