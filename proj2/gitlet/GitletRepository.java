@@ -58,27 +58,45 @@ public class GitletRepository implements Serializable {
         initializeNeededObject();
     }
 
-    public static void add(String filename){
-        /** given filename is not exist*/
-        if(!checkFileExistence(filename)){
-            exit("File does not exist.");
-        };
-        Blob blob = new Blob(filename);
-        index = readStagingArea();
-        /** If the current working version of the file is identical to the version in the current commit, do not stage it to be added*/
-        if(blob.getSHA1() == getLastCommit().getMap().get(filename)){
-            System.exit(0);
-        };
-        /** Staging an already-staged file overwrites the previous entry*/
-        if(index.getMap().containsKey(filename) && blob.getSHA1() != index.getMap().get(filename)){
-            index.add(filename,blob.getSHA1());
+    public static void add(String filename) {
+        /** given filename exist*/
+        if (checkFileExistence(filename)) {
+            Blob blob = new Blob(filename);
+            index = readStagingArea();
+            /** If the current working version of the file is identical to the version in the current commit, do not stage it to be added*/
+            if (getLastCommit().getMap().get(filename) != null && blob.getSHA1().equals(getLastCommit().getMap().get(filename))) {
+                if (index.getRemoval().contains(filename)) {
+                    index.getRemoval().remove(filename);
+                    index.save();
+                } else {
+                    return;
+                }
+            }
+            else if (index.getRemoval().contains(filename)) {
+                index.removal.remove(filename);
+            }
+            /** Staging an already-staged file overwrites the previous entry
+             else if(index.getMap().containsKey(filename) && blob.getSHA1() != index.getMap().get(filename)){
+             index.add(filename,blob.getSHA1());
+             index.save();
+             }
+             if(blob.getSHA1() == index.getMap().get(filename)){
+             return;
+             }
+             /** a removal followed by an add that restores former
+             if(index.getRemoval().contains(filename)){
+             index.getRemoval().remove(filename);
+             index.save();
+             }
+             /** normal stage*/
+            else {
+                blob.save();
+                index.add(filename, blob.getSHA1());
+            }
         }
-        if(index.getMap().containsKey(filename) && blob.getSHA1() == index.getMap().get(filename)){
-            System.exit(0);
-        }
-        /** normal stage*/
-        blob.save();
-        index.add(filename,blob.getSHA1());
+        else{
+                exit("File does not exist.");
+            }
     }
 
     public static void commit(String message){
@@ -108,7 +126,7 @@ public class GitletRepository implements Serializable {
         index = readObject(INDEX_FILE,Index.class);
         currentCommit = getLastCommit();
         if(index.getMap().containsKey(filename)){
-            index.stageRemoval(filename);
+            index.getMap().remove(filename);
             index.save();
             //index.unStage(filename);
         }
