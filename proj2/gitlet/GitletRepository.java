@@ -342,6 +342,7 @@ public class GitletRepository implements Serializable {
         }
         /** If the split point is the same commit as the given branch */
         String splitPoint = getSplitCommit(branchName);
+        System.out.println(splitPoint);
         String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
         String headOfCurrentBranch = getHeadPointer();
         if(splitPoint.equals(headOfGivenBranch)){
@@ -383,12 +384,27 @@ public class GitletRepository implements Serializable {
                 index.removal.add(filename);
                 join(CWD,filename).delete();
             }
-            /** stage for add */
-            else if((!existInCurrentHead && existInNewMap) || (existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename)))){
+            /** stage for add ,create new file*/
+            else if(!existInCurrentHead && existInNewMap){
                 String sha1 = newMap.get(filename);
                 index.add(filename,sha1);
-                /** change the working directory */
-                replaceCWD(filename,sha1);
+                File file = join(CWD,filename);
+                try{
+                    file.createNewFile();
+                }
+                catch(Exception e){
+                    System.err.println(e);
+                }
+                Blob blob = readObject(createFilepathFromSha1(sha1,OBJECT_FOLDER),Blob.class);
+                writeContents(file,blob.getContent());
+            }
+            /** stage for add ,replace file*/
+            else if(existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename))){
+                String sha1 = newMap.get(filename);
+                index.add(filename,sha1);
+                File file = join(CWD,filename);
+                Blob blob = readObject(createFilepathFromSha1(sha1,OBJECT_FOLDER),Blob.class);
+                writeContents(file,blob.getContent());
             }
             else{
                 continue;
@@ -694,11 +710,11 @@ public class GitletRepository implements Serializable {
         String commitIDInTargetBranch = b.get(filename);
         String contentInCurrentBranch = readContentsAsString(createFilepathFromSha1(commitIDInCurrentBranch,OBJECT_FOLDER));
         String contentInTargetBranch = readContentsAsString(createFilepathFromSha1(commitIDInTargetBranch,OBJECT_FOLDER));
-        String conflictContent = "<<<<<<< HEAD" + "\n" + contentInCurrentBranch +"\n" +"=======" + "\n" + contentInTargetBranch +"\n"+">>>>>>>";
-        String blobID = sha1(conflictContent);
-        /** save conflict file*/
-        writeContents(createFilepathFromSha1(blobID,OBJECT_FOLDER),conflictContent);
-        return blobID;
+        String conflictContent = "<<<<<<< HEAD" + "\n" + contentInCurrentBranch +"\n" +"=======" + "\n" + contentInTargetBranch +"\n"+">>>>>>>"+"\n";
+        /** create new blob*/
+        Blob blob = new Blob(filename,conflictContent);
+        blob.save();
+        return blob.getSHA1();
     }
 
     private static void replaceCWD(String filename,String sha1){

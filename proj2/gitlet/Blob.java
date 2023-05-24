@@ -1,5 +1,7 @@
 package gitlet;
 
+import sun.security.provider.SHA;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.TreeMap;
@@ -22,6 +24,11 @@ public class Blob implements Serializable {
         this.SHA1 = sha1(this.content);
     }
 
+    public Blob(String filename,String content){
+        this.filename = filename;
+        this.content = content;
+        this.SHA1 = sha1(this.content);
+    }
     public String getFilename(){
         return this.filename;
     }
