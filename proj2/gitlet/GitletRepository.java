@@ -292,18 +292,23 @@ public class GitletRepository implements Serializable {
     public static void reset(String commitID){
         /** If no commit with the given id exist */
         File file = createFilepathFromSha1(commitID,OBJECT_FOLDER);
-        if(!file.exists()){
+        if(haveUntrackedFiles()){
+            exit("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
+        else if(!file.exists()){
             exit("No commit with that id exists.");
         }
         /** If a working file is untracked in the current branch */
-        else if(haveUntrackedFiles()){
-            //exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-            System.exit(0);
-        }
-        else {
+        else{
+            /** clear cwd */
             writeContents(HEAD_FILE, commitID);
             Commit commit = readObject(createFilepathFromSha1(commitID, OBJECT_FOLDER), Commit.class);
+            List<String> files = plainFilenamesIn(CWD);
+            for(String item:files){
+                if(!commit.getMap().containsKey(item))
+                    join(CWD,item).delete();
+            }
+            /** recover cwd */
             for (String filename : commit.getMap().keySet()) {
                 checkoutHelper(commit, filename);
             }
