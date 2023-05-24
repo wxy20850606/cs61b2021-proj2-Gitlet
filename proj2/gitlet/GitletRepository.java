@@ -249,7 +249,7 @@ public class GitletRepository implements Serializable {
         }
         /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
         if(haveUntrackedFiles()){
-            exit("There is an untracked file in the way; delete it, or add and commit it first.");
+            exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
         }
         /** recover all the files */
         else{
@@ -294,13 +294,15 @@ public class GitletRepository implements Serializable {
             exit("No commit with that id exists.");
         }
         /** If a working file is untracked in the current branch */
-        if(haveUntrackedFiles()){
-            exit("There is an untracked file in the way; delete it, or add and commit it first.");
+        else if(haveUntrackedFiles()){
+            exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
         }
-        writeContents(HEAD_FILE,commitID);
-        Commit commit = readObject(createFilepathFromSha1(commitID,OBJECT_FOLDER),Commit.class);
-        for(String filename:commit.getMap().keySet()){
-            checkoutHelper(commit,filename);
+        else {
+            writeContents(HEAD_FILE, commitID);
+            Commit commit = readObject(createFilepathFromSha1(commitID, OBJECT_FOLDER), Commit.class);
+            for (String filename : commit.getMap().keySet()) {
+                checkoutHelper(commit, filename);
+            }
         }
     }
 
@@ -325,7 +327,7 @@ public class GitletRepository implements Serializable {
         /** If an untracked file in the current commit would be overwritten or deleted by the merge */
         if(haveUntrackedFiles())
         {
-            exit("There is an untracked file in the way; delete it, or add and commit it first.");
+            exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
         }
         /** If the split point is the same commit as the given branch */
         String splitPoint = getSplitCommit(branchName);
@@ -355,16 +357,18 @@ public class GitletRepository implements Serializable {
         Map<String, String> newMap = getNewMergeMap(branchName);
         /** compare to current branch head commit map to get the difference*/
         for(String filename:allFileNameSet){
-            /** no change, pass */
-            if(currentHeadCommitMap.get(filename).equals(newMap.get(filename))){
+            boolean existInCurrentHead = currentHeadCommitMap.containsKey(filename);
+            boolean existInNewMap = newMap.containsKey(filename);
+            /** both exsit but have no change, pass */
+            if(existInCurrentHead && existInNewMap && currentHeadCommitMap.get(filename).equals(newMap.get(filename))){
                 continue;
             }
-            /** both are deleted, pass */
-            else if(!currentHeadCommitMap.containsKey(filename) && newMap.get(filename).equals(null)){
+            /** both not exist, pass */
+            else if(!existInCurrentHead && !existInNewMap ){
                 continue;
             }
             /** stage for removal*/
-            else if(currentHeadCommitMap.containsKey(filename) && newMap.get(filename).equals(null)){
+            else if(existInCurrentHead && !existInNewMap){
                 index.removal.add(filename);
                 join(CWD,filename).delete();
             }
@@ -377,8 +381,7 @@ public class GitletRepository implements Serializable {
             }
         }
         /** make merge commit */
-        Map<String,String> newCommitMap = removeNullValue(newMap);
-        Commit mergeCommit = new Commit(currentHeadCommit,targetBranchCommit,getCurrentBranch(),branchName,newCommitMap);
+        Commit mergeCommit = new Commit(currentHeadCommit,targetBranchCommit,getCurrentBranch(),branchName,newMap);
         mergeCommit.makeCommit();
         //Commit currentHeadCommit,Commit targetBranchHead,String currentBranch,String targetBranch,Map<String,String> newmap
         /** clear staging area*/
@@ -640,7 +643,7 @@ public class GitletRepository implements Serializable {
             if (splitPointCommitMap.containsKey(fileName)) {
                 /** if removed in current branch head commit or removed in target branch head commit */
                 if (!currentHeadCommitMap.containsKey(fileName) || !targetBranchCommitMap.containsKey(fileName)) {
-                    newMap.put(fileName, null);
+                    continue;
                 } else {
                     /** files in two head commits are different from splitPoint commit, means there is a conflict*/
                     boolean x = splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName);
