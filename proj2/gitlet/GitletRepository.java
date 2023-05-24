@@ -500,13 +500,12 @@ public class GitletRepository implements Serializable {
 
     public static void writeToGlobalLog(Commit x){
         String oldLog = readContentsAsString(LOG_HEAD_FILE);
-        String allLog = oldLog +"\n"+"==="+"\n"+"commit "+ x.getSHA1() + "\n" + "Date:" + x.getTimestamp().toString() + "\n" + x.getMessage() ;
+        String allLog = oldLog +"\n"+"==="+"\n"+"commit "+ x.getSHA1() + "\n" + "Date: " + x.getTimestamp().toString() + "\n" + x.getMessage()+ "\n"  ;
         writeContents(LOG_HEAD_FILE,allLog);
     }
     public static Blob getCurrentBlob() {
         return currentBlob;
     }
-
     /** Loop through objects folder to get all the filenames */
     static List<String> getFileNameList(File dir) {
         List<String> list = new ArrayList<>();

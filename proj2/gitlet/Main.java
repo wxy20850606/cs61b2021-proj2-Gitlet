@@ -105,7 +105,7 @@ public class Main {
                 GitletRepository.merge(args[1]);
                 break;
             default:
-                exit("No command with "+ args[0] +" exists.");
+                exit("No command with that name exists.");
         }
     }
     /**
@@ -123,7 +123,7 @@ public class Main {
     }
 
     public static void validateMessage(String[] args, int n) {
-        if (args.length != n) {
+        if (args.length != n || args[1].trim().length() == 0){
             exit("Please enter a commit message.");
         }
     }
