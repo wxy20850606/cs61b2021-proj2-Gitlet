@@ -1,6 +1,5 @@
 package gitlet;
 
-import sun.security.provider.SHA;
 
 import java.io.File;
 import java.io.Serializable;
