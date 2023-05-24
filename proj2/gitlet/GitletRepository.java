@@ -75,20 +75,6 @@ public class GitletRepository implements Serializable {
             else if (index.getRemoval().contains(filename)) {
                 index.removal.remove(filename);
             }
-            /** Staging an already-staged file overwrites the previous entry
-             else if(index.getMap().containsKey(filename) && blob.getSHA1() != index.getMap().get(filename)){
-             index.add(filename,blob.getSHA1());
-             index.save();
-             }
-             if(blob.getSHA1() == index.getMap().get(filename)){
-             return;
-             }
-             /** a removal followed by an add that restores former
-             if(index.getRemoval().contains(filename)){
-             index.getRemoval().remove(filename);
-             index.save();
-             }
-             /** normal stage*/
             else {
                 blob.save();
                 index.add(filename, blob.getSHA1());
@@ -266,22 +252,23 @@ public class GitletRepository implements Serializable {
             exit("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         /** recover all the files */
-        String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
-        Commit headCommit = readObject(createFilepathFromSha1(headCommitID,OBJECT_FOLDER),Commit.class);
-        Map<String,String> targetMap = headCommit.getMap();
-        for(String filename:targetMap.keySet()){
-        checkoutHelper(headCommit,filename);
-        }
-        /** delete if exist in current branch but not in the given branch */
-        Commit currentCommit = getLastCommit();
-        for(String filename:currentCommit.getMap().keySet()){
-            if(!targetMap.containsKey(filename)){
-                restrictedDelete(join(CWD,filename));
+        else{
+            String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
+            Commit headCommit = readObject(createFilepathFromSha1(headCommitID,OBJECT_FOLDER),Commit.class);
+            Map<String,String> targetMap = headCommit.getMap();
+            for(String filename:targetMap.keySet()){
+            checkoutHelper(headCommit,filename);
             }
-        }
+        /** delete if exist in current branch but not in the given branch */
+            Commit currentCommit = getLastCommit();
+            for(String filename:currentCommit.getMap().keySet()){
+                if(!targetMap.containsKey(filename)){
+                    restrictedDelete(join(CWD,filename));
+                }
+            }
         /** update the HEAD file*/
-        String head = "refs/heads/" + branchName;
-        writeContents(HEAD_FILE,head);
+            String head = "refs/heads/" + branchName;
+            writeContents(HEAD_FILE,head);}
     }
 
     public static void rmBranch(String branchName){
