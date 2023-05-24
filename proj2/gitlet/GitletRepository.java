@@ -13,19 +13,19 @@ import static gitlet.Index.*;
 import static gitlet.Commit.*;
 /**
  .gitlet
-  -HEAD("ref: refs/heads/branch name",current branch pointer)
-  -index(staging area,current branch's filenames to sha1s map, associates paths to blobs)
-  -logs(maintain all the commit history)
-    -HEAD(all commit + branch history)
-    -refs
-      -heads
-        -master(master branch commit history)
-        -other branch(other branch commit history)
-  -objects(store all the blob/commit object as files)
-  -refs(maintain all branch pointers,a branch is a reference to a commit)
-    -heads
-        -master(main branch's new reference commit id)
-        -dog(other branch's new reference commit id)
+ -HEAD("ref: refs/heads/branch name",current branch pointer)
+ -index(staging area,current branch's filenames to sha1s map, associates paths to blobs)
+ -logs(maintain all the commit history)
+ -HEAD(all commit + branch history)
+ -refs
+ -heads
+ -master(master branch commit history)
+ -other branch(other branch commit history)
+ -objects(store all the blob/commit object as files)
+ -refs(maintain all branch pointers,a branch is a reference to a commit)
+ -heads
+ -master(main branch's new reference commit id)
+ -dog(other branch's new reference commit id)
  */
 public class GitletRepository implements Serializable {
     /** current working directory*/
@@ -50,7 +50,7 @@ public class GitletRepository implements Serializable {
     private static Blob currentBlob;
     private static Map<String, String> map;
 
-/** handle the `init` command*/
+    /** handle the `init` command*/
     public static void init(){
         /** create all needed folder/files */
         mkDir();
@@ -81,8 +81,8 @@ public class GitletRepository implements Serializable {
             }
         }
         else{
-                exit("File does not exist.");
-            }
+            exit("File does not exist.");
+        }
     }
 
     public static void commit(String message){
@@ -160,8 +160,8 @@ public class GitletRepository implements Serializable {
             }
         }
         if (count == 0) {
-                exit("Found no commit with that message.");
-            }
+            exit("Found no commit with that message.");
+        }
     }
 
     public static void branch(String branchName){
@@ -259,16 +259,16 @@ public class GitletRepository implements Serializable {
             Commit headCommit = readObject(createFilepathFromSha1(headCommitID,OBJECT_FOLDER),Commit.class);
             Map<String,String> targetMap = headCommit.getMap();
             for(String filename:targetMap.keySet()){
-            checkoutHelper(headCommit,filename);
+                checkoutHelper(headCommit,filename);
             }
-        /** delete if exist in current branch but not in the given branch */
+            /** delete if exist in current branch but not in the given branch */
             Commit currentCommit = getLastCommit();
             for(String filename:currentCommit.getMap().keySet()){
                 if(!targetMap.containsKey(filename)){
                     restrictedDelete(join(CWD,filename));
                 }
             }
-        /** update the HEAD file*/
+            /** update the HEAD file*/
             String head = "refs/heads/" + branchName;
             writeContents(HEAD_FILE,head);}
     }
@@ -284,8 +284,8 @@ public class GitletRepository implements Serializable {
         }
         /** Deletes the branch with the given name. */
         else{
-             File branchFile = join(REFS_HEADS_FOLDER,branchName);
-             branchFile.delete();
+            File branchFile = join(REFS_HEADS_FOLDER,branchName);
+            branchFile.delete();
         }
     }
 
@@ -317,7 +317,7 @@ public class GitletRepository implements Serializable {
 
     public static void merge(String branchName){
         index = readStagingArea();
-      /** precheck */
+        /** precheck */
         /** If there are staged additions or removals present */
         if(!readStagingArea().stagingAreaFlag()){
             exit("You have uncommitted changes.");
@@ -370,25 +370,28 @@ public class GitletRepository implements Serializable {
         for(String filename:allFileNameSet){
             boolean existInCurrentHead = currentHeadCommitMap.containsKey(filename);
             boolean existInNewMap = newMap.containsKey(filename);
-            /** both exsit but have no change, pass */
+            /** both exsit but have no change, pass
             if(existInCurrentHead && existInNewMap && currentHeadCommitMap.get(filename).equals(newMap.get(filename))){
                 continue;
             }
-            /** both not exist, pass */
+            /** both not exist, pass
             else if(!existInCurrentHead && !existInNewMap ){
                 continue;
             }
             /** stage for removal*/
-            else if(existInCurrentHead && !existInNewMap){
+            if(existInCurrentHead && !existInNewMap){
                 index.removal.add(filename);
                 join(CWD,filename).delete();
             }
             /** stage for add */
-            else{
+            else if((!existInCurrentHead && existInNewMap) || (existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename)))){
                 String sha1 = newMap.get(filename);
                 index.add(filename,sha1);
                 /** change the working directory */
                 replaceCWD(filename,sha1);
+            }
+            else{
+                continue;
             }
         }
         /** make merge commit */
@@ -570,8 +573,8 @@ public class GitletRepository implements Serializable {
         Map<String,String> stagingMap = readStagingArea().getMap();
         List<String> fileList = plainFilenamesIn(CWD);
         /**if(fileList.contains(".DS_Store")){
-            fileList.remove(".DS_Store");
-        } */
+         fileList.remove(".DS_Store");
+         } */
         for(String file:fileList){
             if(map.containsKey(file) || stagingMap.containsKey(file)){
                 continue;
