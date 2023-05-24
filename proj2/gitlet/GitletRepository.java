@@ -706,6 +706,14 @@ public class GitletRepository implements Serializable {
         File file = join(CWD,filename);
         Blob blob = readObject(createFilepathFromSha1(sha1,OBJECT_FOLDER),Blob.class);
         String content = blob.getContent();
+        if(!file.exists()){
+            try{
+                file.createNewFile();
+            }
+            catch(Exception e){
+                System.err.println(e);
+            }
+        }
         writeContents(file,content);
     }
 
