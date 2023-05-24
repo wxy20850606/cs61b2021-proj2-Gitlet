@@ -342,12 +342,12 @@ public class GitletRepository implements Serializable {
         }
         /** If the split point is the same commit as the given branch */
         String splitPoint = getSplitCommit(branchName);
-        System.out.println(splitPoint);
         String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
         String headOfCurrentBranch = getHeadPointer();
         if(splitPoint.equals(headOfGivenBranch)){
             exit("Given branch is an ancestor of the current branch.");
         }
+
         /** If the split point is the current branch */
         if(splitPoint.equals(headOfCurrentBranch)){
             checkoutBranch(branchName);
