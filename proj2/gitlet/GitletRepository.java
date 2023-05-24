@@ -249,7 +249,9 @@ public class GitletRepository implements Serializable {
         }
         /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
         if(haveUntrackedFiles()){
-            exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
+            //exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
         }
         /** recover all the files */
         else{
@@ -295,7 +297,9 @@ public class GitletRepository implements Serializable {
         }
         /** If a working file is untracked in the current branch */
         else if(haveUntrackedFiles()){
-            exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
+            //exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
         }
         else {
             writeContents(HEAD_FILE, commitID);
@@ -327,7 +331,9 @@ public class GitletRepository implements Serializable {
         /** If an untracked file in the current commit would be overwritten or deleted by the merge */
         if(haveUntrackedFiles())
         {
-            exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
+            //exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
         }
         /** If the split point is the same commit as the given branch */
         String splitPoint = getSplitCommit(branchName);
@@ -396,18 +402,16 @@ public class GitletRepository implements Serializable {
             String Sha1 = map.get(filename);
             Blob blob = readObject(createFilepathFromSha1(Sha1,OBJECT_FOLDER),Blob.class);
             if(file.exists()){
-                file.delete();
-                String sha1 = map.get(filename);
+                writeContents(file,blob.getContent());
+            }
+            /** create the file if it is not in the working directory */
+            else{
                 try{
                     file.createNewFile();
                 }
                 catch(Exception e){
                     System.err.println(e);
                 }
-                writeContents(file,blob.getContent());
-            }
-            /** create the file if it is not in the working directory */
-            else{
                 writeContents(file,blob.getContent());
             }
         }
