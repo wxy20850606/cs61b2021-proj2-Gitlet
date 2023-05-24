@@ -354,6 +354,7 @@ public class GitletRepository implements Serializable {
             exit("Current branch fast-forwarded.");
         }
         /** get three commits in order to process 8 steps */
+        System.out.println(splitPoint);
         Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint,OBJECT_FOLDER),Commit.class);
         Commit currentHeadCommit = getLastCommit();
         Commit targetBranchCommit = readObject(createFilepathFromSha1(headOfGivenBranch,OBJECT_FOLDER),Commit.class);
@@ -710,7 +711,7 @@ public class GitletRepository implements Serializable {
         String commitIDInTargetBranch = b.get(filename);
         String contentInCurrentBranch = readContentsAsString(createFilepathFromSha1(commitIDInCurrentBranch,OBJECT_FOLDER));
         String contentInTargetBranch = readContentsAsString(createFilepathFromSha1(commitIDInTargetBranch,OBJECT_FOLDER));
-        String conflictContent = "<<<<<<< HEAD" + "\n" + contentInCurrentBranch +"\n" +"=======" + "\n" + contentInTargetBranch +"\n"+">>>>>>>"+"\n";
+        String conflictContent = "<<<<<<< HEAD" + "\n" + contentInCurrentBranch  +"=======" + contentInTargetBranch +">>>>>>>"+"\n";
         /** create new blob*/
         Blob blob = new Blob(filename,conflictContent);
         blob.save();
