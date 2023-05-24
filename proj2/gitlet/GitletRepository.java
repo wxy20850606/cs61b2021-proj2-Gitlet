@@ -356,15 +356,15 @@ public class GitletRepository implements Serializable {
         /** compare to current branch head commit map to get the difference*/
         for(String filename:allFileNameSet){
             /** no change, pass */
-            if(currentHeadCommitMap.get(filename) == newMap.get(filename)){
+            if(currentHeadCommitMap.get(filename).equals(newMap.get(filename))){
                 continue;
             }
             /** both are deleted, pass */
-            else if(!currentHeadCommitMap.containsKey(filename) && newMap.get(filename) == null){
+            else if(!currentHeadCommitMap.containsKey(filename) && newMap.get(filename).equals(null)){
                 continue;
             }
             /** stage for removal*/
-            else if(currentHeadCommitMap.containsKey(filename) && newMap.get(filename) == null){
+            else if(currentHeadCommitMap.containsKey(filename) && newMap.get(filename).equals(null)){
                 index.removal.add(filename);
                 join(CWD,filename).delete();
             }
@@ -622,9 +622,10 @@ public class GitletRepository implements Serializable {
         Map<String, String> newMap = new HashMap<>();
         /** get three commits in order to process 8 steps */
         String splitPoint = getSplitCommit(branchName);
+        String targetBranchID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
         Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint, OBJECT_FOLDER), Commit.class);
         Commit currentHeadCommit = getLastCommit();
-        Commit targetBranchCommit = readObject(join(REFS_HEADS_FOLDER, branchName), Commit.class);
+        Commit targetBranchCommit = readObject(createFilepathFromSha1(targetBranchID, OBJECT_FOLDER), Commit.class);
         Map<String, String> splitPointCommitMap = splitPointCommit.getMap();
         Map<String, String> currentHeadCommitMap = currentHeadCommit.getMap();
         Map<String, String> targetBranchCommitMap = targetBranchCommit.getMap();
@@ -688,7 +689,8 @@ public class GitletRepository implements Serializable {
     private static void replaceCWD(String filename,String sha1){
         /** overwrite exist file*/
         File file = join(CWD,filename);
-        String content = readContentsAsString(createFilepathFromSha1(sha1,OBJECT_FOLDER));
+        Blob blob = readObject(createFilepathFromSha1(sha1,OBJECT_FOLDER),Blob.class);
+        String content = blob.getContent();
         writeContents(file,content);
     }
 
