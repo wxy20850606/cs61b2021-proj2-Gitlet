@@ -354,7 +354,6 @@ public class GitletRepository implements Serializable {
             exit("Current branch fast-forwarded.");
         }
         /** get three commits in order to process 8 steps */
-        System.out.println(splitPoint);
         Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint,OBJECT_FOLDER),Commit.class);
         Commit currentHeadCommit = getLastCommit();
         Commit targetBranchCommit = readObject(createFilepathFromSha1(headOfGivenBranch,OBJECT_FOLDER),Commit.class);

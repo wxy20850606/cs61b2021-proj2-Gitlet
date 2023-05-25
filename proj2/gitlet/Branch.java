@@ -39,7 +39,8 @@ public class Branch implements Serializable {
             /** create logs/refs/heads/branchName to record commit history for each branch */
             branchHistoryFile.createNewFile();
             writeContents(branchFile,pointer);
-            writeContents(branchHistoryFile,pointer);
+            String historyCommit = readContentsAsString(join(LOG_REFS_HEAD_FOLDER,getCurrentBranch()));
+            writeContents(branchHistoryFile,historyCommit);
         }
         catch(Exception e){
             System.out.println("A branch with that name already exists.");
