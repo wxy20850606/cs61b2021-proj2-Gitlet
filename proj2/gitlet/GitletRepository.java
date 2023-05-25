@@ -468,10 +468,12 @@ public class GitletRepository implements Serializable {
         writeContents(HEAD_FILE,"refs/heads/master");
 
         /** write .gitlet/refs/heads/master file */
-        writeContents(REFS_HEAD_MASTER_FILE,initialCommit.getSHA1().toString());
+        writeContents(REFS_HEAD_MASTER_FILE,initialCommit.getSHA1());
 
         /** write .gitlet/logs/HEAD file */
         writeToGlobalLog(initialCommit);
+        /** write .gitlet/logs/refs/heads/master file */
+        writeContents(LOG_REFS_HEAD_FOLDER_MASTER_FILE,initialCommit.getSHA1());
     }
     private static void createFile(){
         try{
