@@ -413,6 +413,8 @@ public class GitletRepository implements Serializable {
         /** make merge commit */
         Commit mergeCommit = new Commit(currentHeadCommit,targetBranchCommit,getCurrentBranch(),branchName,newMap);
         mergeCommit.makeCommit();
+        /** update logs/refs/heads file*/
+        updateCommitHistory(mergeCommit.getParent1ID());
         //Commit currentHeadCommit,Commit targetBranchHead,String currentBranch,String targetBranch,Map<String,String> newmap
         /** clear staging area*/
         index.clear();
