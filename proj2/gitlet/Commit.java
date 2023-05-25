@@ -89,6 +89,12 @@ public class Commit implements Serializable {
         File parent1File= createFilepathFromSha1(this.parent1,OBJECT_FOLDER);
         return readObject(parent1File,Commit.class);
     }
+    public String getParent2ID() {
+        return this.parent2;
+    }
+    public String getParent1ID() {
+        return this.parent1;
+    }
     public String getSecondParent(){
         return this.parent2;
     }
@@ -123,14 +129,9 @@ public class Commit implements Serializable {
         writeObject(this.commitFile,this);
     }
 
-
-    public void writeCommitLog(){
-        throw new UnsupportedOperationException();
-    }
     public static Commit getLastCommit(){
         //get current branch's head pointer
-        File refsFile = getHeadPointerFile();
-        String lastCommitSHA1 = readContentsAsString(refsFile);
+        String lastCommitSHA1 = getHeadPointer();
         //read lastCommit as object to get needed information
         File lastCommitFile = createFilepathFromSha1(lastCommitSHA1,OBJECT_FOLDER);
         Commit lastCommit = readObject(lastCommitFile,Commit.class);

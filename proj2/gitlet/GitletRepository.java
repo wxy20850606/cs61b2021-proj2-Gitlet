@@ -531,6 +531,9 @@ public class GitletRepository implements Serializable {
     public static void printCommitLog(Commit x){
         System.out.println("===");
         System.out.println("commit " + x.getSHA1());
+        if(x.getParent2ID() != null){
+            System.out.println("Merge: " + x.getParent1ID().substring(0,7) + " " + x.getParent2ID().substring(0,7));
+        }
         System.out.println("Date: " + x.getTimestamp().toString());
         System.out.println(x.getMessage());
         System.out.println();
@@ -712,7 +715,7 @@ public class GitletRepository implements Serializable {
         String commitIDInTargetBranch = b.get(filename);
         String contentInCurrentBranch = readContentsAsString(createFilepathFromSha1(commitIDInCurrentBranch,OBJECT_FOLDER));
         String contentInTargetBranch = readContentsAsString(createFilepathFromSha1(commitIDInTargetBranch,OBJECT_FOLDER));
-        String conflictContent = "<<<<<<< HEAD" + "\n" + contentInCurrentBranch  +"=======" + contentInTargetBranch +">>>>>>>"+"\n";
+        String conflictContent = "<<<<<<< HEAD" + "\n" + contentInCurrentBranch  +"======="+ "\n" + contentInTargetBranch +">>>>>>>"+"\n";
         /** create new blob*/
         Blob blob = new Blob(filename,conflictContent);
         blob.save();
