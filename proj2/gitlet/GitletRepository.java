@@ -341,13 +341,15 @@ public class GitletRepository implements Serializable {
             System.exit(0);
         }
         /** If the split point is the same commit as the given branch */
-        String splitPoint = getSplitCommit(branchName);
+        Commit currentHeadCommit = getLastCommit();
         String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
+        Commit targetBranchCommit = readObject(createFilepathFromSha1(headOfGivenBranch,OBJECT_FOLDER),Commit.class);
+        String splitPoint = getSplitPointID(currentHeadCommit,targetBranchCommit);
+        //String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
         String headOfCurrentBranch = getHeadPointer();
         if(splitPoint.equals(headOfGivenBranch)){
             exit("Given branch is an ancestor of the current branch.");
         }
-
         /** If the split point is the current branch */
         if(splitPoint.equals(headOfCurrentBranch)){
             checkoutBranch(branchName);
@@ -355,8 +357,6 @@ public class GitletRepository implements Serializable {
         }
         /** get three commits in order to process 8 steps */
         Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint,OBJECT_FOLDER),Commit.class);
-        Commit currentHeadCommit = getLastCommit();
-        Commit targetBranchCommit = readObject(createFilepathFromSha1(headOfGivenBranch,OBJECT_FOLDER),Commit.class);
         Map<String,String> splitPointCommitMap = splitPointCommit.getMap();
         Map<String,String> currentHeadCommitMap = currentHeadCommit.getMap();
         Map<String,String> targetBranchCommitMap = targetBranchCommit.getMap();
@@ -371,15 +371,6 @@ public class GitletRepository implements Serializable {
         for(String filename:allFileNameSet){
             boolean existInCurrentHead = currentHeadCommitMap.containsKey(filename);
             boolean existInNewMap = newMap.containsKey(filename);
-            /** both exsit but have no change, pass
-            if(existInCurrentHead && existInNewMap && currentHeadCommitMap.get(filename).equals(newMap.get(filename))){
-                continue;
-            }
-            /** both not exist, pass
-            else if(!existInCurrentHead && !existInNewMap ){
-                continue;
-            }
-            /** stage for removal*/
             if(existInCurrentHead && !existInNewMap){
                 index.removal.add(filename);
                 join(CWD,filename).delete();
@@ -620,19 +611,32 @@ public class GitletRepository implements Serializable {
         String newHistory = commitID + "\n"+ oldHistory;
         writeContents(file,newHistory);
     }
-    private static String getSplitCommit(String branchName){
-        String splitPoint = new String();
-        String currentBranch = getCurrentBranch();
-        List<String> currentBranchHistory = readCommitHistoryToList(join(LOG_REFS_HEAD_FOLDER,currentBranch));
-        String mergeBranch = branchName;
-        List<String> mergeBranchHistory = readCommitHistoryToList(join(LOG_REFS_HEAD_FOLDER,mergeBranch));
-        for(String commitId:currentBranchHistory){
-            if(mergeBranchHistory.contains(commitId)){
-                splitPoint = commitId;
-                break;
+
+    private static String getSplitPointID(Commit currentHead,Commit targetHead){
+        Map<String,Integer> map1 = getCommitDepthMap(currentHead,0);
+        Map<String,Integer> map2 = getCommitDepthMap(targetHead,0);
+        String minKey = " ";
+        Integer minDepth = Integer.MAX_VALUE;
+        for(String id:map1.keySet()){
+            if(map2.containsKey(id) && map2.get(id) < minDepth){
+                minKey= id;
+                minDepth = map2.get(id);
             }
         }
-        return splitPoint;
+        return minKey;
+    }
+    private static Map<String,Integer> getCommitDepthMap(Commit commit,Integer i){
+        Map<String,Integer> map = new HashMap<>();
+        if(!commit.havaParent1()){
+            map.put(commit.getSHA1(),i);
+            return map;
+        }
+        map.put(commit.getSHA1(),i);
+        i = i + 1;
+        for(Commit x:commit.getParent()){
+            map.putAll(getCommitDepthMap(x,i));
+        }
+        return map;
     }
 
     private static List<String> readCommitHistoryToList(File file){
@@ -659,11 +663,11 @@ public class GitletRepository implements Serializable {
         boolean conflictFlag = false;
         Map<String, String> newMap = new HashMap<>();
         /** get three commits in order to process 8 steps */
-        String splitPoint = getSplitCommit(branchName);
         String targetBranchID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
-        Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint, OBJECT_FOLDER), Commit.class);
         Commit currentHeadCommit = getLastCommit();
         Commit targetBranchCommit = readObject(createFilepathFromSha1(targetBranchID, OBJECT_FOLDER), Commit.class);
+        String splitPoint = getSplitPointID(currentHeadCommit,targetBranchCommit);
+        Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint, OBJECT_FOLDER), Commit.class);
         Map<String, String> splitPointCommitMap = splitPointCommit.getMap();
         Map<String, String> currentHeadCommitMap = currentHeadCommit.getMap();
         Map<String, String> targetBranchCommitMap = targetBranchCommit.getMap();
@@ -672,6 +676,7 @@ public class GitletRepository implements Serializable {
         allFileNameSet.addAll(splitPointCommit.getMap().keySet());
         allFileNameSet.addAll(currentHeadCommit.getMap().keySet());
         allFileNameSet.addAll(targetBranchCommit.getMap().keySet());
+
         /** check each file according to 8 steps */
         for (String fileName : allFileNameSet) {
             /**if in splitPoint commit */
@@ -681,8 +686,8 @@ public class GitletRepository implements Serializable {
                     continue;
                 } else {
                     /** files in two head commits are different from splitPoint commit, means there is a conflict*/
-                    boolean x = splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName);
-                    boolean y = splitPointCommitMap.get(fileName) != targetBranchCommitMap.get(fileName);
+                    boolean x = (splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName));
+                    boolean y = (splitPointCommitMap.get(fileName) != targetBranchCommitMap.get(fileName));
                     if (x && y) {
                         newMap.put(fileName,handelMergeConflict(fileName,currentHeadCommitMap,targetBranchCommitMap));
                         conflictFlag = true;
@@ -710,6 +715,7 @@ public class GitletRepository implements Serializable {
         if(conflictFlag == true){
             System.out.println("Encountered a merge conflict.");}
         return newMap;
+
     }
 
     private static String handelMergeConflict(String filename,Map<String,String> a,Map<String,String> b){

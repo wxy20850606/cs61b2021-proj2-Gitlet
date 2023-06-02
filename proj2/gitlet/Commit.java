@@ -89,6 +89,27 @@ public class Commit implements Serializable {
         File parent1File= createFilepathFromSha1(this.parent1,OBJECT_FOLDER);
         return readObject(parent1File,Commit.class);
     }
+    public List<Commit> getParent(){
+        List<Commit> parentList = new ArrayList<>();
+        if(this.havaParent1()){
+            parentList.add(getParent1());
+        }
+        if(this.havaParent2()){
+            parentList.add(getParent2());
+        }
+        return parentList;
+    }
+    public Commit getParent2() {
+        File parent1File= createFilepathFromSha1(this.parent2,OBJECT_FOLDER);
+        return readObject(parent1File,Commit.class);
+    }
+
+    public Boolean havaParent1(){
+        return this.parent1 != null;
+    }
+    public Boolean havaParent2(){
+        return this.parent2 != null;
+    }
     public String getParent2ID() {
         return this.parent2;
     }
