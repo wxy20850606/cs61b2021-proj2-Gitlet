@@ -3,15 +3,13 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
-
 import gitlet.GitletRepository.*;
-
 import static gitlet.GitletRepository.*;
 import static gitlet.Utils.*;
 
 
 public class Index implements Serializable {
-    public final Map<String,String> added;
+    public final Map<String, String> added;
     public final TreeSet<String> removal;
 
     public Index(){
@@ -19,8 +17,8 @@ public class Index implements Serializable {
         removal = new TreeSet<>();
     }
 
-    public void add(String filename,String sha1){
-        added.put(filename,sha1);
+    public void add(String filename, String sha1){
+        added.put(filename, sha1);
         save();
     }
 
@@ -28,20 +26,20 @@ public class Index implements Serializable {
         added.remove(filename);
         save();
         /** remove the file in the working directory */
-        File removalFile = join(CWD,filename);
+        File removalFile = join(CWD, filename);
         restrictedDelete(removalFile);
     }
 
     public void stageRemoval(String filename){
         removal.add(filename);
         save();
-        File removalFile = join(CWD,filename);
+        File removalFile = join(CWD, filename);
         restrictedDelete(removalFile);
     }
 
     public void unStage(String filename){
         added.remove(filename);
-        File removalFile = join(CWD,filename);
+        File removalFile = join(CWD, filename);
         restrictedDelete(removalFile);
         save();
     }
@@ -54,7 +52,7 @@ public class Index implements Serializable {
         return readObject(INDEX_FILE, Index.class);
     }
     public void save(){
-        writeObject(INDEX_FILE,this);
+        writeObject(INDEX_FILE, this);
     }
 
     public Map<String,String> getMap(){
@@ -72,6 +70,4 @@ public class Index implements Serializable {
     public boolean stagingAreaFlag(){
         return (added.isEmpty() && removal.isEmpty());
     }
-
-
 }

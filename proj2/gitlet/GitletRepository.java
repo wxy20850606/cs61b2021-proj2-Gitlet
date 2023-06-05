@@ -1,15 +1,10 @@
 package gitlet;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-
 import static gitlet.Utils.writeContents;
 import static gitlet.Utils.*;
-import static gitlet.Index.*;
 import static gitlet.Commit.*;
 /**
  .gitlet
@@ -32,16 +27,16 @@ public class GitletRepository implements Serializable {
     public static final File CWD = new File(System.getProperty("user.dir"));
     public static final File GITLET_FOLDER = join(CWD,".gitlet");
     /** file to save last commit id of current branch*/
-    public static final File HEAD_FILE = join(GITLET_FOLDER,"HEAD");
-    public static final File INDEX_FILE = join(GITLET_FOLDER,"index");
-    public static final File LOG_FOLDER = join(GITLET_FOLDER,"logs");
-    public static final File LOG_HEAD_FILE = join(LOG_FOLDER,"HEAD");
-    public static final File LOG_REFS_FOLDER = join(LOG_FOLDER,"refs");
-    public static final File LOG_REFS_HEAD_FOLDER = join(LOG_REFS_FOLDER,"heads");
-    public static final File LOG_REFS_HEAD_FOLDER_MASTER_FILE = join(LOG_REFS_HEAD_FOLDER,"master");
-    public static final File OBJECT_FOLDER = join(GITLET_FOLDER,"objects");
-    public static final File REFS_FOLDER = join(GITLET_FOLDER,"refs");
-    public static final File REFS_HEADS_FOLDER = join(REFS_FOLDER,"heads");
+    public static final File HEAD_FILE = join(GITLET_FOLDER, "HEAD");
+    public static final File INDEX_FILE = join(GITLET_FOLDER, "index");
+    public static final File LOG_FOLDER = join(GITLET_FOLDER, "logs");
+    public static final File LOG_HEAD_FILE = join(LOG_FOLDER, "HEAD");
+    public static final File LOG_REFS_FOLDER = join(LOG_FOLDER, "refs");
+    public static final File LOG_REFS_HEAD_FOLDER = join(LOG_REFS_FOLDER, "heads");
+    public static final File LOG_REFS_HEAD_FOLDER_MASTER_FILE = join(LOG_REFS_HEAD_FOLDER, "master");
+    public static final File OBJECT_FOLDER = join(GITLET_FOLDER, "objects");
+    public static final File REFS_FOLDER = join(GITLET_FOLDER, "refs");
+    public static final File REFS_HEADS_FOLDER = join(REFS_FOLDER, "heads");
     public static final File REFS_HEAD_MASTER_FILE = join(REFS_HEADS_FOLDER, "master");
 
     private static Index index;
@@ -80,27 +75,27 @@ public class GitletRepository implements Serializable {
                 index.add(filename, blob.getSHA1());
             }
         }
-        else{
+        else {
             exit("File does not exist.");
         }
     }
 
     public static void commit(String message){
-        index = readObject(INDEX_FILE,Index.class);
+        index = readObject(INDEX_FILE, Index.class);
         /** If no files have been staged, abort.*/
-        if(index.stagingAreaFlag()){
+        if (index.stagingAreaFlag()){
             exit("No changes added to the commit.");
         }
-        Map<String,String> stagingMap = index.getMap();
+        Map<String, String> stagingMap = index.getMap();
         /** last commit map add stagingArea map*/
-        Map<String,String> newCommitMap = combine(getLastCommitMap(),stagingMap);
+        Map<String, String> newCommitMap = combine(getLastCommitMap(), stagingMap);
         /** minus rm file*/
         TreeSet<String> removalList =  index.removal;
-        for(String x : removalList){
+        for (String x : removalList){
             newCommitMap.remove(x);
         }
         /** make commit*/
-        Commit newCommit = new Commit(getLastCommit().getSHA1(),message,newCommitMap);
+        Commit newCommit = new Commit(getLastCommit().getSHA1(), message,newCommitMap);
         newCommit.makeCommit();
         index.clear();
         /** update logs/refs/heads/branchName file to record the commit history */
@@ -109,32 +104,32 @@ public class GitletRepository implements Serializable {
 
     public static void rm(String filename){
         /** Unstage the file if it is currently staged for addition. delete*/
-        index = readObject(INDEX_FILE,Index.class);
+        index = readObject(INDEX_FILE, Index.class);
         currentCommit = getLastCommit();
-        if(index.getMap().containsKey(filename)){
+        if (index.getMap().containsKey(filename)){
             index.getMap().remove(filename);
             index.save();
             //index.unStage(filename);
         }
         /** If the file is tracked in the current commit, stage it for removal ,delete*/
-        else if(currentCommit.getMap().containsKey(filename)){
+        else if (currentCommit.getMap().containsKey(filename)){
             index.stageRemoval(filename);
             index.save();
         }
         /** If the file is neither staged nor tracked by the head commit, print the error message No reason to remove the file. */
-        else{
+        else {
             exit("No reason to remove the file.");
         }
     }
 
     public static void log(){
         currentCommit = getLastCommit();
-        while(currentCommit != null){
+        while (currentCommit != null){
             printCommitLog(currentCommit);
-            if(currentCommit.getParent1SHA1() != null){
+            if (currentCommit.getParent1SHA1() != null){
                 currentCommit = currentCommit.getParent1();
             }
-            else{
+            else {
                 break;
             }
         }
@@ -149,7 +144,8 @@ public class GitletRepository implements Serializable {
         int count = 0;
         for (String fileName : fileNameList) {
             File file = join(OBJECT_FOLDER, fileName);
-            try {
+            try
+            {
                 currentCommit = readObject(file, Commit.class);
                 if (currentCommit.getMessage().equals(message)) {
                     System.out.println(currentCommit.getSHA1());
@@ -166,7 +162,7 @@ public class GitletRepository implements Serializable {
 
     public static void branch(String branchName){
         List<String> branchNameList = plainFilenamesIn(REFS_HEADS_FOLDER);
-        if(branchNameList.contains(branchName)){
+        if (branchNameList.contains(branchName)){
             exit("A branch with that name already exists.");
         }
         Branch newbranch = new Branch(branchName);
@@ -180,10 +176,10 @@ public class GitletRepository implements Serializable {
         List<String> filenames = plainFilenamesIn(REFS_HEADS_FOLDER);
         Collections.sort(filenames);
         for (String str : filenames) {
-            if(str.equals(getCurrentBranch())){
+            if (str.equals(getCurrentBranch())){
                 statusBuilder.append("*").append(str).append("\n");
             }
-            else{
+            else {
                 statusBuilder.append(str).append("\n");
             }
         }
@@ -200,7 +196,7 @@ public class GitletRepository implements Serializable {
 
         // removed files
         statusBuilder.append("=== Removed Files ===").append("\n");
-        for(String str2:readStagingArea().getRemoval()){
+        for (String str2:readStagingArea().getRemoval()){
             statusBuilder.append(str2).append("\n");
         }
         statusBuilder.append("\n");
@@ -213,99 +209,98 @@ public class GitletRepository implements Serializable {
         statusBuilder.append("=== Untracked Files ===").append("\n");
         List<String> untrackedList = new ArrayList<>(untrackedFiles());
         Collections.sort(untrackedList);
-        for(String str3:untrackedList){
-            if(!str3.equals(".DS_Store")){
+        for (String str3:untrackedList){
+            if (!str3.equals(".DS_Store")){
                 statusBuilder.append(str3).append("\n");
             }
         }
         statusBuilder.append("\n");
-
         System.out.print(statusBuilder);
     }
     public static void checkoutFilename(String filename){
-        checkoutHelper(getLastCommit(),filename);
+        checkoutHelper(getLastCommit(), filename);
     }
 
-    public static void checkoutCommit(String commitID,String filename){
-        File file = createFilepathFromSha1(commitID,OBJECT_FOLDER);
-        if(!file.exists()){
+    public static void checkoutCommit(String commitID, String filename){
+        File file = createFilepathFromSha1(commitID, OBJECT_FOLDER);
+        if (!file.exists()){
             exit("No commit with that id exists.");
         }
         else{
-            Commit commit = readObject(file,Commit.class);
-            checkoutHelper(commit,filename);
+            Commit commit = readObject(file, Commit.class);
+            checkoutHelper(commit, filename);
         }
     }
 
     public static void checkoutBranch(String branchName){
         /** If no branch with that name exists  */
-        if(!branchExist(branchName)){
+        if (!branchExist(branchName)){
             exit("No such branch exists.");
         }
         /** If that branch is the current branch */
-        if(ifOnCurrentBranch(branchName)){
+        if (ifOnCurrentBranch(branchName)){
             exit("No need to checkout the current branch.");
         }
         /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
-        if(haveUntrackedFiles()){
+        if (haveUntrackedFiles()){
             //exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
             System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
             System.exit(0);
         }
         /** recover all the files */
-        else{
-            String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
-            Commit headCommit = readObject(createFilepathFromSha1(headCommitID,OBJECT_FOLDER),Commit.class);
+        else {
+            String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
+            Commit headCommit = readObject(createFilepathFromSha1(headCommitID,OBJECT_FOLDER), Commit.class);
             Map<String,String> targetMap = headCommit.getMap();
-            for(String filename:targetMap.keySet()){
+            for (String filename:targetMap.keySet()){
                 checkoutHelper(headCommit,filename);
             }
             /** delete if exist in current branch but not in the given branch */
             Commit currentCommit = getLastCommit();
-            for(String filename:currentCommit.getMap().keySet()){
-                if(!targetMap.containsKey(filename)){
-                    restrictedDelete(join(CWD,filename));
+            for (String filename:currentCommit.getMap().keySet()){
+                if (!targetMap.containsKey(filename)){
+                    restrictedDelete(join(CWD, filename));
                 }
             }
             /** update the HEAD file*/
             String head = "refs/heads/" + branchName;
-            writeContents(HEAD_FILE,head);}
+            writeContents(HEAD_FILE, head);}
     }
 
     public static void rmBranch(String branchName){
         /** If a branch with the given name does not exist, aborts.*/
-        if(!branchExist(branchName)){
+        if (!branchExist(branchName)){
             exit("A branch with that name does not exist.");
         }
         /** If you try to remove the branch you’re currently on, aborts.*/
-        else if(ifOnCurrentBranch(branchName)){
+        else if (ifOnCurrentBranch(branchName)){
             exit("Cannot remove the current branch.");
         }
         /** Deletes the branch with the given name. */
-        else{
-            File branchFile = join(REFS_HEADS_FOLDER,branchName);
+        else {
+            File branchFile = join(REFS_HEADS_FOLDER, branchName);
             branchFile.delete();
         }
     }
 
     public static void reset(String commitID){
         /** If no commit with the given id exist */
-        File file = createFilepathFromSha1(commitID,OBJECT_FOLDER);
-        if(haveUntrackedFiles()){
+        File file = createFilepathFromSha1(commitID, OBJECT_FOLDER);
+        if (haveUntrackedFiles()){
             exit("There is an untracked file in the way; delete it, or add and commit it first.");
         }
-        else if(!file.exists()){
+        else if (!file.exists()){
             exit("No commit with that id exists.");
         }
         /** If a working file is untracked in the current branch */
-        else{
+        else {
             /** clear cwd */
             writeContents(HEAD_FILE, commitID);
             Commit commit = readObject(createFilepathFromSha1(commitID, OBJECT_FOLDER), Commit.class);
             List<String> files = plainFilenamesIn(CWD);
-            for(String item:files){
-                if(!commit.getMap().containsKey(item))
-                    join(CWD,item).delete();
+            for (String item:files){
+                if (!commit.getMap().containsKey(item))
+                    join(CWD, item).delete();
             }
             /** recover cwd */
             for (String filename : commit.getMap().keySet()) {
@@ -322,7 +317,7 @@ public class GitletRepository implements Serializable {
             exit("You have uncommitted changes.");
         }
         /** If a branch with the given name does not exist,*/
-        if(!join(REFS_HEADS_FOLDER,branchName).exists())
+        if(!join(REFS_HEADS_FOLDER, branchName).exists())
         {
             exit("A branch with that name does not exist.");
         }
@@ -341,24 +336,24 @@ public class GitletRepository implements Serializable {
         }
         /** If the split point is the same commit as the given branch */
         Commit currentHeadCommit = getLastCommit();
-        String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
-        Commit targetBranchCommit = readObject(createFilepathFromSha1(headOfGivenBranch,OBJECT_FOLDER),Commit.class);
-        String splitPoint = getSplitPointID(currentHeadCommit,targetBranchCommit);
+        String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
+        Commit targetBranchCommit = readObject(createFilepathFromSha1(headOfGivenBranch, OBJECT_FOLDER), Commit.class);
+        String splitPoint = getSplitPointID(currentHeadCommit, targetBranchCommit);
         //String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
         String headOfCurrentBranch = getHeadPointer();
-        if(splitPoint.equals(headOfGivenBranch)){
+        if (splitPoint.equals(headOfGivenBranch)){
             exit("Given branch is an ancestor of the current branch.");
         }
         /** If the split point is the current branch */
-        if(splitPoint.equals(headOfCurrentBranch)){
+        if (splitPoint.equals(headOfCurrentBranch)){
             checkoutBranch(branchName);
             exit("Current branch fast-forwarded.");
         }
         /** get three commits in order to process 8 steps */
-        Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint,OBJECT_FOLDER),Commit.class);
-        Map<String,String> splitPointCommitMap = splitPointCommit.getMap();
-        Map<String,String> currentHeadCommitMap = currentHeadCommit.getMap();
-        Map<String,String> targetBranchCommitMap = targetBranchCommit.getMap();
+        Commit splitPointCommit = readObject(createFilepathFromSha1(splitPoint, OBJECT_FOLDER), Commit.class);
+        Map<String, String> splitPointCommitMap = splitPointCommit.getMap();
+        Map<String, String> currentHeadCommitMap = currentHeadCommit.getMap();
+        Map<String, String> targetBranchCommitMap = targetBranchCommit.getMap();
         /** get all filename keys through combine all three map*/
         Set<String> allFileNameSet = new HashSet<>();
         allFileNameSet.addAll(splitPointCommit.getMap().keySet());
@@ -367,15 +362,15 @@ public class GitletRepository implements Serializable {
         /** get new merge map according to 8 steps */
         Map<String, String> newMap = getNewMergeMap(branchName);
         /** compare to current branch head commit map to get the difference*/
-        for(String filename:allFileNameSet){
+        for (String filename:allFileNameSet){
             boolean existInCurrentHead = currentHeadCommitMap.containsKey(filename);
             boolean existInNewMap = newMap.containsKey(filename);
-            if(existInCurrentHead && !existInNewMap){
+            if (existInCurrentHead && !existInNewMap){
                 index.removal.add(filename);
-                join(CWD,filename).delete();
+                join(CWD, filename).delete();
             }
             /** stage for add ,create new file*/
-            else if(!existInCurrentHead && existInNewMap){
+            else if (!existInCurrentHead && existInNewMap){
                 String sha1 = newMap.get(filename);
                 index.add(filename,sha1);
                 File file = join(CWD,filename);
@@ -385,23 +380,23 @@ public class GitletRepository implements Serializable {
                 catch(Exception e){
                     System.err.println(e);
                 }
-                Blob blob = readObject(createFilepathFromSha1(sha1,OBJECT_FOLDER),Blob.class);
+                Blob blob = readObject(createFilepathFromSha1(sha1, OBJECT_FOLDER), Blob.class);
                 writeContents(file,blob.getContent());
             }
             /** stage for add ,replace file*/
             else if(existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename))){
                 String sha1 = newMap.get(filename);
-                index.add(filename,sha1);
-                File file = join(CWD,filename);
-                Blob blob = readObject(createFilepathFromSha1(sha1,OBJECT_FOLDER),Blob.class);
-                writeContents(file,blob.getContent());
+                index.add(filename, sha1);
+                File file = join(CWD, filename);
+                Blob blob = readObject(createFilepathFromSha1(sha1, OBJECT_FOLDER),Blob.class);
+                writeContents(file, blob.getContent());
             }
             else{
                 continue;
             }
         }
         /** make merge commit */
-        Commit mergeCommit = new Commit(currentHeadCommit,targetBranchCommit,getCurrentBranch(),branchName,newMap);
+        Commit mergeCommit = new Commit(currentHeadCommit, targetBranchCommit, getCurrentBranch(), branchName, newMap);
         mergeCommit.makeCommit();
         /** update logs/refs/heads file*/
         updateCommitHistory(mergeCommit.getSHA1());
@@ -412,13 +407,13 @@ public class GitletRepository implements Serializable {
     private static void checkoutHelper(Commit commit,String filename){
         /** if filename exist in current commit */
         Map<String, String> map = commit.getMap();
-        if(map.containsKey(filename)){
-            File file = join(CWD,filename);
+        if (map.containsKey(filename)){
+            File file = join(CWD, filename);
             /** overwrite the file if it exists in the working directory */
             String Sha1 = map.get(filename);
             Blob blob = readObject(createFilepathFromSha1(Sha1,OBJECT_FOLDER),Blob.class);
-            if(file.exists()){
-                writeContents(file,blob.getContent());
+            if (file.exists()){
+                writeContents(file, blob.getContent());
             }
             /** create the file if it is not in the working directory */
             else{
@@ -428,7 +423,7 @@ public class GitletRepository implements Serializable {
                 catch(Exception e){
                     System.err.println(e);
                 }
-                writeContents(file,blob.getContent());
+                writeContents(file, blob.getContent());
             }
         }
         /**if filename not exist in current commit */
@@ -450,22 +445,22 @@ public class GitletRepository implements Serializable {
     private static void initializeNeededObject(){
         /** make initial commit */
         Commit initialCommit = new Commit("initial commit");
-        File file = createFilepathFromSha1(initialCommit.getSHA1(),OBJECT_FOLDER);
+        File file = createFilepathFromSha1(initialCommit.getSHA1(), OBJECT_FOLDER);
         initialCommit.save();
 
         /** initialize index object and Serialize it */
-        writeObject(INDEX_FILE,new Index());
+        writeObject(INDEX_FILE, new Index());
 
         /** write .gitlet/HEAD file */
-        writeContents(HEAD_FILE,"refs/heads/master");
+        writeContents(HEAD_FILE, "refs/heads/master");
 
         /** write .gitlet/refs/heads/master file */
-        writeContents(REFS_HEAD_MASTER_FILE,initialCommit.getSHA1());
+        writeContents(REFS_HEAD_MASTER_FILE, initialCommit.getSHA1());
 
         /** write .gitlet/logs/HEAD file */
         writeToGlobalLog(initialCommit);
         /** write .gitlet/logs/refs/heads/master file */
-        writeContents(LOG_REFS_HEAD_FOLDER_MASTER_FILE,initialCommit.getSHA1());
+        writeContents(LOG_REFS_HEAD_FOLDER_MASTER_FILE, initialCommit.getSHA1());
     }
     private static void createFile(){
         try{
@@ -479,26 +474,26 @@ public class GitletRepository implements Serializable {
             System.err.println(e);
         }
     }
-    public static Map<String,String> combine(Map<String,String> a,Map<String,String> b){
+    public static Map<String, String> combine(Map<String, String> a,Map<String, String> b){
         Set<String> keyA = a.keySet();
         Set<String> keyB = b.keySet();
-        for(String x: keyB){
+        for (String x: keyB){
             a.put(x,b.get(x));
         }
         return a;
     }
     public static File createFilepathFromSha1(String sha1,File folder){
-        String first2 = sha1.substring(0,2);
+        String first2 = sha1.substring(0, 2);
         String last38 = sha1.substring(2);
-        File subFolder = Utils.join(folder,first2);
+        File subFolder = Utils.join(folder, first2);
         subFolder.mkdir();
-        File filepath = Utils.join(subFolder,last38);
+        File filepath = Utils.join(subFolder, last38);
         return filepath;
     }
     public static File getHeadPointerFile(){
         String head = readContentsAsString(HEAD_FILE);
         //get current branch's head pointer
-        File refsFile = join(GITLET_FOLDER,head);
+        File refsFile = join(GITLET_FOLDER, head);
         return refsFile;
     }
     public static String getHeadPointer(){
@@ -508,11 +503,11 @@ public class GitletRepository implements Serializable {
     public static void updateHeadPointerFile(String sha1){
         //get current branch's head pointer
         File refsFile = getHeadPointerFile();
-        writeContents(refsFile,sha1);
+        writeContents(refsFile, sha1);
     }
 
     private static boolean checkFileExistence(String filename){
-        File file = join(CWD,filename);
+        File file = join(CWD, filename);
         return file.exists();
     }
 
@@ -520,7 +515,7 @@ public class GitletRepository implements Serializable {
         System.out.println("===");
         System.out.println("commit " + x.getSHA1());
         if(x.getParent2ID() != null){
-            System.out.println("Merge: " + x.getParent1ID().substring(0,7) + " " + x.getParent2ID().substring(0,7));
+            System.out.println("Merge: " + x.getParent1ID().substring(0, 7) + " " + x.getParent2ID().substring(0, 7));
         }
         System.out.println("Date: " + x.getTimestamp().toString());
         System.out.println(x.getMessage());
@@ -529,8 +524,8 @@ public class GitletRepository implements Serializable {
 
     public static void writeToGlobalLog(Commit x){
         String oldLog = readContentsAsString(LOG_HEAD_FILE);
-        String allLog = oldLog +"\n"+"==="+"\n"+"commit "+ x.getSHA1() + "\n" + "Date: " + x.getTimestamp().toString() + "\n" + x.getMessage()+ "\n"  ;
-        writeContents(LOG_HEAD_FILE,allLog);
+        String allLog = oldLog + "\n" + "===" + "\n" + "commit "+ x.getSHA1() + "\n" + "Date: " + x.getTimestamp().toString() + "\n" + x.getMessage()+ "\n"  ;
+        writeContents(LOG_HEAD_FILE, allLog);
     }
     /** Loop through objects folder to get all the filenames */
     static List<String> getFileNameList(File dir) {
@@ -576,16 +571,16 @@ public class GitletRepository implements Serializable {
     private static List<String> untrackedFiles(){
         List<String> list = new ArrayList<>();
         map = getLastCommit().getMap();
-        Map<String,String> stagingMap = readStagingArea().getMap();
+        Map<String, String> stagingMap = readStagingArea().getMap();
         List<String> fileList = plainFilenamesIn(CWD);
         /**if(fileList.contains(".DS_Store")){
          fileList.remove(".DS_Store");
          } */
-        for(String file:fileList){
-            if(map.containsKey(file) || stagingMap.containsKey(file)){
+        for (String file:fileList){
+            if (map.containsKey(file) || stagingMap.containsKey(file)){
                 continue;
             }
-            else{
+            else {
                 list.add(file);
             }
         }
@@ -601,16 +596,16 @@ public class GitletRepository implements Serializable {
         File file = join(LOG_REFS_HEAD_FOLDER,getCurrentBranch());
         String oldHistory = readContentsAsString(file);
         String newHistory = commitID + "\n"+ oldHistory;
-        writeContents(file,newHistory);
+        writeContents(file, newHistory);
     }
 
     private static String getSplitPointID(Commit currentHead,Commit targetHead){
-        Map<String,Integer> map1 = getCommitDepthMap(currentHead,0);
-        Map<String,Integer> map2 = getCommitDepthMap(targetHead,0);
+        Map<String,Integer> map1 = getCommitDepthMap(currentHead, 0);
+        Map<String,Integer> map2 = getCommitDepthMap(targetHead, 0);
         String minKey = " ";
         Integer minDepth = Integer.MAX_VALUE;
-        for(String id:map1.keySet()){
-            if(map2.containsKey(id) && map2.get(id) < minDepth){
+        for (String id:map1.keySet()){
+            if (map2.containsKey(id) && map2.get(id) < minDepth){
                 minKey= id;
                 minDepth = map2.get(id);
             }
@@ -619,14 +614,14 @@ public class GitletRepository implements Serializable {
     }
     private static Map<String,Integer> getCommitDepthMap(Commit commit,Integer i){
         Map<String,Integer> map = new HashMap<>();
-        if(!commit.havaParent1()){
-            map.put(commit.getSHA1(),i);
+        if (!commit.havaParent1()){
+            map.put(commit.getSHA1(), i);
             return map;
         }
-        map.put(commit.getSHA1(),i);
+        map.put(commit.getSHA1(), i);
         i = i + 1;
-        for(Commit x:commit.getParent()){
-            map.putAll(getCommitDepthMap(x,i));
+        for (Commit x:commit.getParent()){
+            map.putAll(getCommitDepthMap(x, i));
         }
         return map;
     }
@@ -656,16 +651,19 @@ public class GitletRepository implements Serializable {
                 /** if removed in current branch head commit or removed in target branch head commit */
                 if (!currentHeadCommitMap.containsKey(fileName) || !targetBranchCommitMap.containsKey(fileName)) {
                     continue;
-                } else {
+                }
+                else {
                     /** files in two head commits are different from splitPoint commit, means there is a conflict*/
                     boolean x = (splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName));
                     boolean y = (splitPointCommitMap.get(fileName) != targetBranchCommitMap.get(fileName));
                     if (x && y) {
-                        newMap.put(fileName,handelMergeConflict(fileName,currentHeadCommitMap,targetBranchCommitMap));
+                        newMap.put(fileName,handelMergeConflict(fileName, currentHeadCommitMap, targetBranchCommitMap));
                         conflictFlag = true;
-                    } else if (x) {
+                    }
+                    else if (x) {
                         newMap.put(fileName, currentHeadCommitMap.get(fileName));
-                    } else if (y) {
+                    }
+                    else if (y) {
                         newMap.put(fileName, targetBranchCommitMap.get(fileName));
                     }
                 }
@@ -675,11 +673,12 @@ public class GitletRepository implements Serializable {
                 if (currentHeadCommitMap.containsKey(fileName) && !targetBranchCommitMap.containsKey(fileName)) {
                     newMap.put(fileName, currentHeadCommitMap.get(fileName));
                 }
-                else if(!currentHeadCommitMap.containsKey(fileName) && targetBranchCommitMap.containsKey(fileName)) {
+                else if
+                (!currentHeadCommitMap.containsKey(fileName) && targetBranchCommitMap.containsKey(fileName)) {
                     newMap.put(fileName, targetBranchCommitMap.get(fileName));
                 }
                 else{
-                    newMap.put(fileName,handelMergeConflict(fileName,currentHeadCommitMap,targetBranchCommitMap));
+                    newMap.put(fileName, handelMergeConflict(fileName, currentHeadCommitMap, targetBranchCommitMap));
                     conflictFlag = true;
                 }
             }
@@ -690,14 +689,14 @@ public class GitletRepository implements Serializable {
 
     }
 
-    private static String handelMergeConflict(String filename,Map<String,String> a,Map<String,String> b){
+    private static String handelMergeConflict(String filename, Map<String, String> a, Map<String, String> b){
         String commitIDInCurrentBranch = a.get(filename);
         String commitIDInTargetBranch = b.get(filename);
-        Blob currentBranchBlob = readObject(createFilepathFromSha1(commitIDInCurrentBranch,OBJECT_FOLDER),Blob.class);
-        Blob targetBranchBlob = readObject(createFilepathFromSha1(commitIDInTargetBranch,OBJECT_FOLDER),Blob.class);
-        String conflictContent = "<<<<<<< HEAD" + "\n" + currentBranchBlob.getContent()+"\n"  +"======="+ "\n" + targetBranchBlob.getContent() +"\n"+">>>>>>>";
+        Blob currentBranchBlob = readObject(createFilepathFromSha1(commitIDInCurrentBranch, OBJECT_FOLDER), Blob.class);
+        Blob targetBranchBlob = readObject(createFilepathFromSha1(commitIDInTargetBranch, OBJECT_FOLDER), Blob.class);
+        String conflictContent = "<<<<<<< HEAD" + "\n" + currentBranchBlob.getContent()+ "\n"  +"======="+ "\n" + targetBranchBlob.getContent() +"\n"+">>>>>>>";
         /** create new blob*/
-        Blob blob = new Blob(filename,conflictContent);
+        Blob blob = new Blob(filename, conflictContent);
         blob.save();
         return blob.getSHA1();
     }

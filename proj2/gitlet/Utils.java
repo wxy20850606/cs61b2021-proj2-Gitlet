@@ -14,12 +14,9 @@ import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
-
-import static gitlet.GitletRepository.HEAD_FILE;
 
 
 /** Assorted utilities.

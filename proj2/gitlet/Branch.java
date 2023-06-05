@@ -2,8 +2,6 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static gitlet.GitletRepository.*;
@@ -15,7 +13,6 @@ public class Branch implements Serializable {
 
     public Branch(String name){
         this.name = name;
-        //this.commitIDHistory = new ArrayList<>();
     }
 
     public String getBranchName(){
@@ -30,17 +27,19 @@ public class Branch implements Serializable {
      */
     public void create(){
         /** create head pointer file */
-        File branchFile = new File(REFS_HEADS_FOLDER,this.name);
-        File branchHistoryFile = new File(LOG_REFS_HEAD_FOLDER,this.name);
+        File branchFile = new File(REFS_HEADS_FOLDER, this.name);
+        File branchHistoryFile = new File(LOG_REFS_HEAD_FOLDER, this.name);
         String pointer = getHeadPointer();
-        try{
+        try
+        {
             /** create refs/heads/branchName file to record branch pointer*/
             branchFile.createNewFile();
             /** create logs/refs/heads/branchName to record commit history for each branch */
             branchHistoryFile.createNewFile();
-            writeContents(branchFile,pointer);
-            String historyCommit = readContentsAsString(join(LOG_REFS_HEAD_FOLDER,getCurrentBranch()));
-            writeContents(branchHistoryFile,historyCommit);
+            writeContents(branchFile, pointer);
+            File file = join(LOG_REFS_HEAD_FOLDER, getCurrentBranch());
+            String historyCommit = readContentsAsString(file);
+            writeContents(branchHistoryFile, historyCommit);
         }
         catch(Exception e){
             System.out.println("A branch with that name already exists.");

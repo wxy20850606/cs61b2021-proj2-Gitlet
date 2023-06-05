@@ -1,13 +1,7 @@
 package gitlet;
 
-import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.LinkedList;
-
-import static gitlet.GitletRepository.*;
-
-import static gitlet.Commit.getLastCommit;
 
 public class Log implements Serializable {
     private LinkedList<Commit> log;
