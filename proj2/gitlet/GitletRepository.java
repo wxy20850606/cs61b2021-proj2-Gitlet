@@ -238,7 +238,6 @@ public class GitletRepository implements Serializable {
     }
 
     public static void checkoutBranch(String branchName){
-
         /** If no branch with that name exists  */
         if(!branchExist(branchName)){
             exit("No such branch exists.");
@@ -595,7 +594,7 @@ public class GitletRepository implements Serializable {
 
     private static boolean haveUntrackedFiles(){
         /** have .DS_Store so the size is 1*/
-        return untrackedFiles().size() > 1;
+        return untrackedFiles().size() >= 1;
     }
 
     public static void updateCommitHistory(String commitID){
@@ -696,7 +695,7 @@ public class GitletRepository implements Serializable {
         String commitIDInTargetBranch = b.get(filename);
         Blob currentBranchBlob = readObject(createFilepathFromSha1(commitIDInCurrentBranch,OBJECT_FOLDER),Blob.class);
         Blob targetBranchBlob = readObject(createFilepathFromSha1(commitIDInTargetBranch,OBJECT_FOLDER),Blob.class);
-        String conflictContent = "<<<<<<< HEAD" + "\n" + currentBranchBlob.getContent()+"\n"  +"======="+ "\n" + targetBranchBlob.getContent() +"\n"+">>>>>>>";
+        String conflictContent = "<<<<<<< HEAD" + "\n" + currentBranchBlob.getContent()+"\n"  +"======="+ "\n" + targetBranchBlob.getContent() +"\n"+">>>>>>>\n";
         /** create new blob*/
         Blob blob = new Blob(filename,conflictContent);
         blob.save();
