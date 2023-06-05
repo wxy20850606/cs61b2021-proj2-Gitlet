@@ -517,10 +517,6 @@ public class GitletRepository implements Serializable {
         return file.exists();
     }
 
-    private static boolean checkIfBlobExist(String filename,String sha1){
-        return (getLastCommit().getMap().get(filename) == sha1);
-    }
-
     public static void printCommitLog(Commit x){
         System.out.println("===");
         System.out.println("commit " + x.getSHA1());
@@ -536,9 +532,6 @@ public class GitletRepository implements Serializable {
         String oldLog = readContentsAsString(LOG_HEAD_FILE);
         String allLog = oldLog +"\n"+"==="+"\n"+"commit "+ x.getSHA1() + "\n" + "Date: " + x.getTimestamp().toString() + "\n" + x.getMessage()+ "\n"  ;
         writeContents(LOG_HEAD_FILE,allLog);
-    }
-    public static Blob getCurrentBlob() {
-        return currentBlob;
     }
     /** Loop through objects folder to get all the filenames */
     static List<String> getFileNameList(File dir) {
@@ -724,16 +717,5 @@ public class GitletRepository implements Serializable {
             }
         }
         writeContents(file,content);
-    }
-
-    private static Map<String,String> removeNullValue(Map<String,String> map){
-        Iterator<Map.Entry<String, String>> iterator = map.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, String> entry = iterator.next();
-            if (entry.getValue() == null) {
-                iterator.remove();
-            }
-        }
-        return map;
     }
 }
