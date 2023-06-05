@@ -707,7 +707,6 @@ public class GitletRepository implements Serializable {
         /** create new blob*/
         Blob blob = new Blob(filename,conflictContent);
         blob.save();
-        System.out.println(conflictContent);
         return blob.getSHA1();
     }
 
