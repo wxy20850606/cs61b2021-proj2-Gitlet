@@ -703,8 +703,8 @@ public class GitletRepository implements Serializable {
         return blob.getSHA1();
     }
 
-    private static void replaceCWD(String filename,String sha1){
-        /** overwrite exist file*/
+    /**private static void replaceCWD(String filename,String sha1){
+         overwrite exist file
         File file = join(CWD,filename);
         Blob blob = readObject(createFilepathFromSha1(sha1,OBJECT_FOLDER),Blob.class);
         String content = blob.getContent();
@@ -718,4 +718,5 @@ public class GitletRepository implements Serializable {
         }
         writeContents(file,content);
     }
+    */
 }
