@@ -639,26 +639,6 @@ public class GitletRepository implements Serializable {
         return map;
     }
 
-    private static List<String> readCommitHistoryToList(File file){
-        List<String> commitHistoryList = new ArrayList<String>();
-        Path filePath = file.toPath();
-        List<String> lines = readLinesFromFile(filePath);
-        for (String line : lines) {
-            commitHistoryList.add(line);
-        }
-        return commitHistoryList;
-    }
-
-    private static List<String> readLinesFromFile(Path filePath) {
-        List<String> lines = null;
-        try {
-            lines = Files.readAllLines(filePath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return lines;
-    }
-
     private static Map<String,String> getNewMergeMap(String branchName) {
         boolean conflictFlag = false;
         Map<String, String> newMap = new HashMap<>();
@@ -721,12 +701,13 @@ public class GitletRepository implements Serializable {
     private static String handelMergeConflict(String filename,Map<String,String> a,Map<String,String> b){
         String commitIDInCurrentBranch = a.get(filename);
         String commitIDInTargetBranch = b.get(filename);
-        String contentInCurrentBranch = readContentsAsString(createFilepathFromSha1(commitIDInCurrentBranch,OBJECT_FOLDER));
-        String contentInTargetBranch = readContentsAsString(createFilepathFromSha1(commitIDInTargetBranch,OBJECT_FOLDER));
-        String conflictContent = "<<<<<<< HEAD" + "\n" + contentInCurrentBranch  +"======="+ "\n" + contentInTargetBranch +">>>>>>>"+"\n";
+        Blob currentBranchBlob = readObject(createFilepathFromSha1(commitIDInCurrentBranch,OBJECT_FOLDER),Blob.class);
+        Blob targetBranchBlob = readObject(createFilepathFromSha1(commitIDInTargetBranch,OBJECT_FOLDER),Blob.class);
+        String conflictContent = "<<<<<<< HEAD" + "\n" + currentBranchBlob.getContent()+"\n"  +"======="+ "\n" + targetBranchBlob.getContent() +"\n"+">>>>>>>"+"\n";
         /** create new blob*/
         Blob blob = new Blob(filename,conflictContent);
         blob.save();
+        System.out.println(conflictContent);
         return blob.getSHA1();
     }
 
