@@ -8,8 +8,9 @@ import static gitlet.Utils.*;
 
 
 public class Index implements Serializable {
-    public final Map<String, String> added;
-    public final TreeSet<String> removal;
+
+    private final Map<String, String> added;
+    private final TreeSet<String> removal;
 
     public Index() {
         added = new HashMap<>();
@@ -50,18 +51,18 @@ public class Index implements Serializable {
     public static Index fromFile() {
         return readObject(INDEX_FILE, Index.class);
     }
-    public void save(){
+    public void save() {
         writeObject(INDEX_FILE, this);
     }
 
-    public Map<String,String> getMap() {
+    public Map<String, String> getMap() {
         return this.added;
     }
 
     public TreeSet<String> getRemoval() {
         return this.removal;
     }
-    public void clear(){
+    public void clear() {
         added.clear();
         removal.clear();
         save();

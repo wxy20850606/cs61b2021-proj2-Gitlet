@@ -1,6 +1,5 @@
 package gitlet;
 
-// TODO: any imports you need here
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +14,7 @@ import static gitlet.Utils.sha1;
 import static gitlet.GitletRepository.*;
 
 public class Commit implements Serializable {
-    static final File COMMIT_FOLDER = Utils.join(GitletRepository.GITLET_FOLDER,"objects");
+    static final File COMMIT_FOLDER = Utils.join(GitletRepository.GITLET_FOLDER, "objects");
 
     /**
      * List all instance variables of the Commit class here with a useful
@@ -42,19 +41,20 @@ public class Commit implements Serializable {
         this.commitFilePath = commitFile.toString();
     }
 
-    public Commit(String parent1,String message,Map<String,String> map) {
+    public Commit(String parent1, String message, Map<String, String> map) {
         this.message = message;
         this.parent1 = parent1;
         this.timestamp = formatDate();
         this.filenameTofilePathMap = map;
-        this.sha1 = sha1(parent1 + message + timestamp.toString() + filenameTofilePathMap.toString());
+        String content = parent1 + message + timestamp.toString() + filenameTofilePathMap.toString();
+        this.sha1 = sha1(content);
         this.commitFile = createFilepathFromSha1(sha1, OBJECT_FOLDER);
     }
-    public Commit(Commit currentHeadCommit,Commit targetBranchHead,String currentBranch,String targetBranch,Map<String,String> newmap) {
-        this.message = "Merged "+ targetBranch + " into " + currentBranch +".";
-        this.parent1 = currentHeadCommit.sha1;
-        this.parent2 = targetBranchHead.sha1;
-        this.filenameTofilePathMap = newmap;
+    public Commit(Commit currentCommit,Commit targetHead,String currentBranch,String targetBranch,Map<String, String> a) {
+        this.message = "Merged "+ targetBranch + " into " + currentBranch + ".";
+        this.parent1 = currentCommit.sha1;
+        this.parent2 = targetHead.sha1;
+        this.filenameTofilePathMap = a;
         this.timestamp = formatDate();
         this.sha1 = sha1(parent1 + parent2 + message + timestamp.toString() + filenameTofilePathMap.toString());
         this.commitFile = createFilepathFromSha1(this.sha1, OBJECT_FOLDER);
@@ -71,10 +71,10 @@ public class Commit implements Serializable {
         return this.parent1;
     }
     public Commit getParent1() {
-        File parent1File= createFilepathFromSha1(this.parent1, OBJECT_FOLDER);
+        File parent1File = createFilepathFromSha1(this.parent1, OBJECT_FOLDER);
         return readObject(parent1File, Commit.class);
     }
-    public List<Commit> getParent(){
+    public List<Commit> getParent() {
         List<Commit> parentList = new ArrayList<>();
         if (this.havaParent1()) {
             parentList.add(getParent1());
@@ -85,7 +85,7 @@ public class Commit implements Serializable {
         return parentList;
     }
     public Commit getParent2() {
-        File parent1File= createFilepathFromSha1(this.parent2, OBJECT_FOLDER);
+        File parent1File = createFilepathFromSha1(this.parent2, OBJECT_FOLDER);
         return readObject(parent1File, Commit.class);
     }
 
@@ -109,7 +109,7 @@ public class Commit implements Serializable {
         return this.sha1;
     }
 
-    public Map<String,String> getMap() {
+    public Map<String, String> getMap() {
         return this.filenameTofilePathMap;
     }
 
@@ -131,7 +131,7 @@ public class Commit implements Serializable {
     }
     /** transient fields will not be serialized
     // when back in and deserialized, will be set to their default values.*/
-    public void save(){
+    public void save() {
         writeObject(this.commitFile, this);
     }
 
@@ -143,14 +143,13 @@ public class Commit implements Serializable {
         Commit lastCommit = readObject(lastCommitFile, Commit.class);
         return lastCommit;
     }
-    public static Map<String, String> getLastCommitMap(){
+    public static Map<String, String> getLastCommitMap() {
         return getLastCommit().getMap();
     }
-
-   public static String formatDate() {
+    public static String formatDate() {
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy Z");
         String formattedDateTime = currentDateTime.format(formatter);
         return formattedDateTime;
-   }
+    }
 }

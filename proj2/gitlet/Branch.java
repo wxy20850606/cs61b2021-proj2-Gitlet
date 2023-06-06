@@ -11,7 +11,7 @@ public class Branch implements Serializable {
     private String name;
     private List commitIDHistory;
 
-    public Branch(String name){
+    public Branch(String name) {
         this.name = name;
     }
 
@@ -25,13 +25,12 @@ public class Branch implements Serializable {
         return this.commitIDHistory;
     }
      */
-    public void create(){
+    public void create() {
         /** create head pointer file */
         File branchFile = new File(REFS_HEADS_FOLDER, this.name);
         File branchHistoryFile = new File(LOG_REFS_HEAD_FOLDER, this.name);
         String pointer = getHeadPointer();
-        try
-        {
+        try {
             /** create refs/heads/branchName file to record branch pointer*/
             branchFile.createNewFile();
             /** create logs/refs/heads/branchName to record commit history for each branch */
@@ -40,8 +39,7 @@ public class Branch implements Serializable {
             File file = join(LOG_REFS_HEAD_FOLDER, getCurrentBranch());
             String historyCommit = readContentsAsString(file);
             writeContents(branchHistoryFile, historyCommit);
-        }
-        catch(Exception e){
+        } catch (Exception ex) {
             System.out.println("A branch with that name already exists.");
         }
     }

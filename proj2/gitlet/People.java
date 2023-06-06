@@ -1,2 +1,6 @@
-package gitlet;public class People {
+package gitlet;
+
+public class People {
+    return null;
+    }
 }
