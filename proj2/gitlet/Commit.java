@@ -33,7 +33,7 @@ public class Commit implements Serializable {
     private Map<String, String> filenameTofilePathMap;
 
     /** The constructor of first Commit. */
-    public Commit(String message){
+    public Commit(String message) {
         this.timestamp = formatDate();
         this.message = message;
         this.sha1 = sha1(this.message);
@@ -42,7 +42,7 @@ public class Commit implements Serializable {
         this.commitFilePath = commitFile.toString();
     }
 
-    public Commit(String parent1,String message,Map<String,String> map){
+    public Commit(String parent1,String message,Map<String,String> map) {
         this.message = message;
         this.parent1 = parent1;
         this.timestamp = formatDate();
@@ -50,7 +50,7 @@ public class Commit implements Serializable {
         this.sha1 = sha1(parent1 + message + timestamp.toString() + filenameTofilePathMap.toString());
         this.commitFile = createFilepathFromSha1(sha1, OBJECT_FOLDER);
     }
-    public Commit(Commit currentHeadCommit,Commit targetBranchHead,String currentBranch,String targetBranch,Map<String,String> newmap){
+    public Commit(Commit currentHeadCommit,Commit targetBranchHead,String currentBranch,String targetBranch,Map<String,String> newmap) {
         this.message = "Merged "+ targetBranch + " into " + currentBranch +".";
         this.parent1 = currentHeadCommit.sha1;
         this.parent2 = targetBranchHead.sha1;
@@ -59,15 +59,15 @@ public class Commit implements Serializable {
         this.sha1 = sha1(parent1 + parent2 + message + timestamp.toString() + filenameTofilePathMap.toString());
         this.commitFile = createFilepathFromSha1(this.sha1, OBJECT_FOLDER);
     }
-    public String getMessage(){
+    public String getMessage() {
         return this.message;
     }
 
-    public String getTimestamp(){
+    public String getTimestamp() {
         return this.timestamp;
     }
 
-    public String getParent1SHA1(){
+    public String getParent1SHA1() {
         return this.parent1;
     }
     public Commit getParent1() {
@@ -76,10 +76,10 @@ public class Commit implements Serializable {
     }
     public List<Commit> getParent(){
         List<Commit> parentList = new ArrayList<>();
-        if(this.havaParent1()){
+        if (this.havaParent1()) {
             parentList.add(getParent1());
         }
-        if(this.havaParent2()){
+        if (this.havaParent2()) {
             parentList.add(getParent2());
         }
         return parentList;
@@ -89,10 +89,10 @@ public class Commit implements Serializable {
         return readObject(parent1File, Commit.class);
     }
 
-    public Boolean havaParent1(){
+    public Boolean havaParent1() {
         return this.parent1 != null;
     }
-    public Boolean havaParent2(){
+    public Boolean havaParent2() {
         return this.parent2 != null;
     }
     public String getParent2ID() {
@@ -101,15 +101,15 @@ public class Commit implements Serializable {
     public String getParent1ID() {
         return this.parent1;
     }
-    public String getSecondParent(){
+    public String getSecondParent() {
         return this.parent2;
     }
 
-    public String getSHA1(){
+    public String getSHA1() {
         return this.sha1;
     }
 
-    public Map<String,String> getMap(){
+    public Map<String,String> getMap() {
         return this.filenameTofilePathMap;
     }
 
@@ -123,7 +123,7 @@ public class Commit implements Serializable {
         //modify files according to staging area.
         //write back any new objects
     }
-    public Map<String, String> removeFromCommit(String filename){
+    public Map<String, String> removeFromCommit(String filename) {
         Commit lastCommit = getLastCommit();
         Map<String, String> lastcommitMap = lastCommit.getMap();
         lastcommitMap.remove(filename);
@@ -135,7 +135,7 @@ public class Commit implements Serializable {
         writeObject(this.commitFile, this);
     }
 
-    public static Commit getLastCommit(){
+    public static Commit getLastCommit() {
         //get current branch's head pointer
         String lastCommitSHA1 = getHeadPointer();
         //read lastCommit as object to get needed information
@@ -147,7 +147,7 @@ public class Commit implements Serializable {
         return getLastCommit().getMap();
     }
 
-   public static String formatDate(){
+   public static String formatDate() {
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy Z");
         String formattedDateTime = currentDateTime.format(formatter);
