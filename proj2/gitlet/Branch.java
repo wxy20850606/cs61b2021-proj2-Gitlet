@@ -15,7 +15,7 @@ public class Branch implements Serializable {
         this.name = name;
     }
 
-    public String getBranchName(){
+    public String getBranchName() {
         return this.name;
     }
 
@@ -28,19 +28,16 @@ public class Branch implements Serializable {
     public void create() {
         /** create head pointer file */
         File branchFile = new File(REFS_HEADS_FOLDER, this.name);
-        File branchHistoryFile = new File(LOG_REFS_HEAD_FOLDER, this.name);
         String pointer = getHeadPointer();
+        if(branchFile.exists()){
+            System.out.println("A branch with that name already exists.");
+        }
         try {
             /** create refs/heads/branchName file to record branch pointer*/
             branchFile.createNewFile();
-            /** create logs/refs/heads/branchName to record commit history for each branch */
-            branchHistoryFile.createNewFile();
             writeContents(branchFile, pointer);
-            File file = join(LOG_REFS_HEAD_FOLDER, getCurrentBranch());
-            String historyCommit = readContentsAsString(file);
-            writeContents(branchHistoryFile, historyCommit);
         } catch (Exception ex) {
-            System.out.println("A branch with that name already exists.");
+            System.err.println(ex);
         }
     }
 }

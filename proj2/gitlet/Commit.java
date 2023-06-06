@@ -29,15 +29,15 @@ public class Commit implements Serializable {
     private String sha1;
     private File commitFile;
     private String commitFilePath;
-    private Map<String, String> filenameTofilePathMap;
+    private Map<String, String> fileToIDMap;
 
     /** The constructor of first Commit. */
     public Commit(String message) {
         this.timestamp = formatDate();
         this.message = message;
         this.sha1 = sha1(this.message);
-        this.filenameTofilePathMap = new HashMap<>();
-        this.commitFile = createFilepathFromSha1(sha1, OBJECT_FOLDER);
+        this.fileToIDMap = new HashMap<>();
+        this.commitFile = createFile(sha1, OBJECT_FOLDER);
         this.commitFilePath = commitFile.toString();
     }
 
@@ -45,19 +45,19 @@ public class Commit implements Serializable {
         this.message = message;
         this.parent1 = parent1;
         this.timestamp = formatDate();
-        this.filenameTofilePathMap = map;
-        String content = parent1 + message + timestamp.toString() + filenameTofilePathMap.toString();
+        this.fileToIDMap = map;
+        String content = parent1 + message + timestamp.toString() + fileToIDMap.toString();
         this.sha1 = sha1(content);
-        this.commitFile = createFilepathFromSha1(sha1, OBJECT_FOLDER);
+        this.commitFile = createFile(sha1, OBJECT_FOLDER);
     }
-    public Commit(Commit currentCommit,Commit targetHead,String currentBranch,String targetBranch,Map<String, String> a) {
+    public Commit(Commit x, Commit y, String currentBranch, String targetBranch, Map<String, String> a) {
         this.message = "Merged "+ targetBranch + " into " + currentBranch + ".";
-        this.parent1 = currentCommit.sha1;
-        this.parent2 = targetHead.sha1;
-        this.filenameTofilePathMap = a;
+        this.parent1 = x.sha1;
+        this.parent2 = y.sha1;
+        this.fileToIDMap = a;
         this.timestamp = formatDate();
-        this.sha1 = sha1(parent1 + parent2 + message + timestamp.toString() + filenameTofilePathMap.toString());
-        this.commitFile = createFilepathFromSha1(this.sha1, OBJECT_FOLDER);
+        this.sha1 = sha1(parent1 + parent2 + message + timestamp.toString() + a.toString());
+        this.commitFile = createFile(this.sha1, OBJECT_FOLDER);
     }
     public String getMessage() {
         return this.message;
@@ -71,7 +71,7 @@ public class Commit implements Serializable {
         return this.parent1;
     }
     public Commit getParent1() {
-        File parent1File = createFilepathFromSha1(this.parent1, OBJECT_FOLDER);
+        File parent1File = createFile(this.parent1, OBJECT_FOLDER);
         return readObject(parent1File, Commit.class);
     }
     public List<Commit> getParent() {
@@ -85,7 +85,7 @@ public class Commit implements Serializable {
         return parentList;
     }
     public Commit getParent2() {
-        File parent1File = createFilepathFromSha1(this.parent2, OBJECT_FOLDER);
+        File parent1File = createFile(this.parent2, OBJECT_FOLDER);
         return readObject(parent1File, Commit.class);
     }
 
@@ -110,7 +110,7 @@ public class Commit implements Serializable {
     }
 
     public Map<String, String> getMap() {
-        return this.filenameTofilePathMap;
+        return this.fileToIDMap;
     }
 
     public void makeCommit() {
@@ -139,7 +139,7 @@ public class Commit implements Serializable {
         //get current branch's head pointer
         String lastCommitSHA1 = getHeadPointer();
         //read lastCommit as object to get needed information
-        File lastCommitFile = createFilepathFromSha1(lastCommitSHA1, OBJECT_FOLDER);
+        File lastCommitFile = createFile(lastCommitSHA1, OBJECT_FOLDER);
         Commit lastCommit = readObject(lastCommitFile, Commit.class);
         return lastCommit;
     }

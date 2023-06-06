@@ -44,7 +44,7 @@ public class Blob implements Serializable {
         return this.blobFile;
     }
     public void save() {
-        this.blobFile = createFilepathFromSha1(sha1, OBJECT_FOLDER);
+        this.blobFile = createFile(sha1, OBJECT_FOLDER);
         writeObject(this.getBlobFile(), this);
     }
 }

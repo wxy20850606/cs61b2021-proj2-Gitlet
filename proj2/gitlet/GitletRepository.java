@@ -56,24 +56,22 @@ public class GitletRepository implements Serializable {
         if (checkFileExistence(filename)) {
             Blob blob = new Blob(filename);
             index = readStagingArea();
-            /** If the current working version of the file is identical to the version in the current commit, do not stage it to be added*/
-            Boolean existInLastCommit = blob.getSHA1().equals(getLastCommit().getMap().get(filename));
-            if (getLastCommit().getMap().get(filename) != null && existInLastCommit) {
+            /** If the current working version of the file is identical to the version in the current commit*/
+            boolean inLastCommit = blob.getSHA1().equals(getLastCommit().getMap().get(filename));
+            if (getLastCommit().getMap().get(filename) != null && inLastCommit) {
                 if (index.getRemoval().contains(filename)) {
                     index.getRemoval().remove(filename);
                     index.save();
                 } else {
                     return;
                 }
-            }
-            else if (index.getRemoval().contains(filename)) {
-                index.removal.remove(filename);}
-            else {
+            } else if (index.getRemoval().contains(filename)) {
+                index.getRemoval().remove(filename);
+            } else {
                 blob.save();
                 index.add(filename, blob.getSHA1());
             }
-        }
-        else {
+        } else {
             exit("File does not exist.");
         }
     }
@@ -88,8 +86,8 @@ public class GitletRepository implements Serializable {
         /** last commit map add stagingArea map*/
         Map<String, String> newCommitMap = combine(getLastCommitMap(), stagingMap);
         /** minus rm file*/
-        TreeSet<String> removalList =  index.removal;
-        for (String x : removalList){
+        TreeSet<String> removalList =  index.getRemoval();
+        for (String x : removalList) {
             newCommitMap.remove(x);
         }
         /** make commit*/
@@ -180,7 +178,7 @@ public class GitletRepository implements Serializable {
         statusBuilder.append("=== Staged Files ===").append("\n");
         List<String> list = new ArrayList<>(readStagingArea().getMap().keySet());
         Collections.sort(list);
-        for (String str1 : list){
+        for (String str1 : list) {
             statusBuilder.append(str1).append("\n");
         }
         statusBuilder.append("\n");
@@ -216,7 +214,7 @@ public class GitletRepository implements Serializable {
         File file = createFile(commitID, OBJECT_FOLDER);
         if (!file.exists()) {
             exit("No commit with that id exists.");
-        } else{
+        } else {
             Commit commit = readObject(file, Commit.class);
             checkoutHelper(commit, filename);
         }
@@ -224,16 +222,13 @@ public class GitletRepository implements Serializable {
 
     public static void checkoutBranch(String branchName) {
         /** If no branch with that name exists  */
-        if (!branchExist(branchName)){
+        if (!branchExist(branchName)) {
             exit("No such branch exists.");
-        }
-        /** If that branch is the current branch */
-        if (ifOnCurrentBranch(branchName)){
+        }else if (ifOnCurrentBranch(branchName)) {
+            /** If that branch is the current branch */
             exit("No need to checkout the current branch.");
-        }
-        /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
-        if (haveUntrackedFiles()){
-            //exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
+        }else if (haveUntrackedFiles()) {
+            /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
             System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
             System.exit(0);
         } else {
@@ -247,7 +242,7 @@ public class GitletRepository implements Serializable {
             /** delete if exist in current branch but not in the given branch */
             Commit currentCommit = getLastCommit();
             for (String filename:currentCommit.getMap().keySet()) {
-                if (!targetMap.containsKey(filename)){
+                if (!targetMap.containsKey(filename)) {
                     restrictedDelete(join(CWD, filename));
                 }
             }
@@ -350,7 +345,7 @@ public class GitletRepository implements Serializable {
             boolean existInNewMap = newMap.containsKey(filename);
             boolean currentEqualNew = currentHeadCommitMap.get(filename).equals(newMap.get(filename));
             if (existInCurrentHead && !existInNewMap){
-                index.removal.add(filename);
+                index.getRemoval().add(filename);
                 join(CWD, filename).delete();
             }
             /** stage for add ,create new file*/
@@ -460,7 +455,7 @@ public class GitletRepository implements Serializable {
         Set<String> keyA = a.keySet();
         Set<String> keyB = b.keySet();
         for (String x: keyB){
-            a.put(x,b.get(x));
+            a.put(x, b.get(x));
         }
         return a;
     }
@@ -560,7 +555,7 @@ public class GitletRepository implements Serializable {
          fileList.remove(".DS_Store");
          } */
         for (String file:fileList){
-            if (map.containsKey(file) || stagingMap.containsKey(file)){
+            if (map.containsKey(file) || stagingMap.containsKey(file)) {
                 continue;
             } else {
                 list.add(file);
@@ -577,13 +572,13 @@ public class GitletRepository implements Serializable {
     public static void updateCommitHistory(String commitID) {
         File file = join(LOG_REFS_HEAD_FOLDER,getCurrentBranch());
         String oldHistory = readContentsAsString(file);
-        String newHistory = commitID + "\n"+ oldHistory;
+        String newHistory = commitID + "\n" + oldHistory;
         writeContents(file, newHistory);
     }
 
     private static String getSplitPointID(Commit currentHead,Commit targetHead) {
-        Map<String,Integer> map1 = getCommitDepthMap(currentHead, 0);
-        Map<String,Integer> map2 = getCommitDepthMap(targetHead, 0);
+        Map<String, Integer> map1 = getCommitDepthMap(currentHead, 0);
+        Map<String, Integer> map2 = getCommitDepthMap(targetHead, 0);
         String minKey = " ";
         Integer minDepth = Integer.MAX_VALUE;
         for (String id:map1.keySet()){
@@ -594,8 +589,8 @@ public class GitletRepository implements Serializable {
         }
         return minKey;
     }
-    private static Map<String,Integer> getCommitDepthMap(Commit commit,Integer i) {
-        Map<String,Integer> map = new HashMap<>();
+    private static Map<String, Integer> getCommitDepthMap(Commit commit, Integer i) {
+        Map<String, Integer> map = new HashMap<>();
         if (!commit.havaParent1()){
             map.put(commit.getSHA1(), i);
             return map;
@@ -608,7 +603,7 @@ public class GitletRepository implements Serializable {
         return map;
     }
 
-    private static Map<String,String> getNewMergeMap(String branchName) {
+    private static Map<String, String> getNewMergeMap(String branchName) {
         boolean conflictFlag = false;
         Map<String, String> newMap = new HashMap<>();
         /** get three commits in order to process 8 steps */
@@ -656,14 +651,15 @@ public class GitletRepository implements Serializable {
                     newMap.put(fileName, currentHeadCommitMap.get(fileName));
                 } else if (!currentHeadCommitMap.containsKey(fileName) && targetBranchCommitMap.containsKey(fileName)) {
                     newMap.put(fileName, targetBranchCommitMap.get(fileName));
-                } else{
+                } else {
                     newMap.put(fileName, handelMergeConflict(fileName, currentHeadCommitMap, targetBranchCommitMap));
                     conflictFlag = true;
                 }
             }
         }
-        if(conflictFlag == true){
-            System.out.println("Encountered a merge conflict.");}
+        if(conflictFlag == true) {
+            System.out.println("Encountered a merge conflict.");
+        }
         return newMap;
 
     }
