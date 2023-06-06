@@ -29,15 +29,9 @@ public class Branch implements Serializable {
         /** create head pointer file */
         File branchFile = new File(REFS_HEADS_FOLDER, this.name);
         String pointer = getHeadPointer();
-        if(branchFile.exists()){
+        if(branchFile.exists()) {
             System.out.println("A branch with that name already exists.");
         }
-        try {
-            /** create refs/heads/branchName file to record branch pointer*/
-            branchFile.createNewFile();
-            writeContents(branchFile, pointer);
-        } catch (Exception ex) {
-            System.err.println(ex);
-        }
+        writeContents(branchFile, pointer);
     }
 }

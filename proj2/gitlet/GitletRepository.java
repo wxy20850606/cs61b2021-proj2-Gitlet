@@ -279,8 +279,9 @@ public class GitletRepository implements Serializable {
             Commit commit = readObject(createFile(commitID, OBJECT_FOLDER), Commit.class);
             List<String> files = plainFilenamesIn(CWD);
             for (String item:files) {
-                if (!commit.getMap().containsKey(item))
+                if (!commit.getMap().containsKey(item)) {
                     join(CWD, item).delete();
+                }
             }
             /** recover cwd */
             for (String filename : commit.getMap().keySet()) {
@@ -293,33 +294,31 @@ public class GitletRepository implements Serializable {
         index = readStagingArea();
         /** precheck */
         /** If there are staged additions or removals present */
-        if(!readStagingArea().stagingAreaFlag()) {
+        if (!readStagingArea().stagingAreaFlag()) {
             exit("You have uncommitted changes.");
         }
         /** If a branch with the given name does not exist,*/
-        if(!join(REFS_HEADS_FOLDER, branchName).exists()) {
+        if (!join(REFS_HEADS_FOLDER, branchName).exists()) {
             exit("A branch with that name does not exist.");
         }
         /** If attempting to merge a branch with itself */
-        if(branchName.equals(getCurrentBranch())) {
+        if (branchName.equals(getCurrentBranch())) {
             exit("Cannot merge a branch with itself.");
         }
-        /** If merge would generate an error because the commit that it does has no changes in it,just let the normal commit error message for this go through.  */
+        /** If merge generate an error because the commit that it does has no changes in it */
         //pass
-        /** If an untracked file in the current commit would be overwritten or deleted by the merge */
-        if(haveUntrackedFiles()) {
-            //exit("There is an untracked file in the way;" + " delete it, or add and commit it first.");
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
-            System.exit(0);
+        /** If an untracked file in the current commit be overwritten or deleted by the merge */
+        if (haveUntrackedFiles()) {
+            exit("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         /** If the split point is the same commit as the given branch */
         Commit currentHeadCommit = getLastCommit();
-        String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
-        Commit targetBranchCommit = readObject(createFile(headOfGivenBranch, OBJECT_FOLDER), Commit.class);
+        String headID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
+        Commit targetBranchCommit = readObject(createFile(headID, OBJECT_FOLDER), Commit.class);
         String splitPoint = getSplitPointID(currentHeadCommit, targetBranchCommit);
         //String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
         String headOfCurrentBranch = getHeadPointer();
-        if (splitPoint.equals(headOfGivenBranch)) {
+        if (splitPoint.equals(headID)) {
             exit("Given branch is an ancestor of the current branch.");
         }
         /** If the split point is the current branch */
@@ -340,7 +339,7 @@ public class GitletRepository implements Serializable {
         /** get new merge map according to 8 steps */
         Map<String, String> newMap = getNewMergeMap(branchName);
         /** compare to current branch head commit map to get the difference*/
-        for (String filename :allFileNameSet){
+        for (String filename :allFileNameSet) {
             boolean existInCurrentHead = currentHeadCommitMap.containsKey(filename);
             boolean existInNewMap = newMap.containsKey(filename);
             boolean currentEqualNew = currentHeadCommitMap.get(filename).equals(newMap.get(filename));
@@ -349,14 +348,14 @@ public class GitletRepository implements Serializable {
                 join(CWD, filename).delete();
             }
             /** stage for add ,create new file*/
-            else if (!existInCurrentHead && existInNewMap){
+            else if (!existInCurrentHead && existInNewMap) {
                 String sha1 = newMap.get(filename);
                 index.add(filename, sha1);
                 File file = join(CWD, filename);
-                try{
+                try {
                     file.createNewFile();
                 }
-                catch(Exception ex){
+                catch (Exception ex){
                     System.err.println(ex);
                 }
                 Blob blob = readObject(createFile(sha1, OBJECT_FOLDER), Blob.class);
@@ -381,7 +380,7 @@ public class GitletRepository implements Serializable {
         /** clear staging area*/
         index.clear();
     }
-    private static void checkoutHelper(Commit commit,String filename) {
+    private static void checkoutHelper(Commit commit, String filename) {
         /** if filename exist in current commit */
         Map<String, String> map = commit.getMap();
         if (map.containsKey(filename)) {
@@ -391,20 +390,18 @@ public class GitletRepository implements Serializable {
             Blob blob = readObject(createFile(Sha1, OBJECT_FOLDER), Blob.class);
             if (file.exists()) {
                 writeContents(file, blob.getContent());
-            }
-            /** create the file if it is not in the working directory */
-            else{
-                try{
+            } else {
+                /** create the file if it is not in the working directory */
+                try {
                     file.createNewFile();
                 }
-                catch(Exception e) {
+                catch (Exception e) {
                     System.err.println(e);
                 }
                 writeContents(file, blob.getContent());
             }
-        }
-        /**if filename not exist in current commit */
-        else{
+        } else{
+            /**if filename not exist in current commit */
             exit("File does not exist in that commit.");
         }
     }
@@ -583,7 +580,7 @@ public class GitletRepository implements Serializable {
         Integer minDepth = Integer.MAX_VALUE;
         for (String id:map1.keySet()){
             if (map2.containsKey(id) && map2.get(id) < minDepth){
-                minKey= id;
+                minKey = id;
                 minDepth = map2.get(id);
             }
         }
@@ -591,7 +588,7 @@ public class GitletRepository implements Serializable {
     }
     private static Map<String, Integer> getCommitDepthMap(Commit commit, Integer i) {
         Map<String, Integer> map = new HashMap<>();
-        if (!commit.havaParent1()){
+        if (!commit.havaParent1()) {
             map.put(commit.getSHA1(), i);
             return map;
         }
@@ -628,19 +625,16 @@ public class GitletRepository implements Serializable {
                 /** if removed in current branch head commit or removed in target branch head commit */
                 if (!currentHeadCommitMap.containsKey(fileName) || !targetBranchCommitMap.containsKey(fileName)) {
                     continue;
-                }
-                else {
+                } else {
                     /** files in two head commits are different from splitPoint commit, means there is a conflict*/
                     boolean x = (splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName));
                     boolean y = (splitPointCommitMap.get(fileName) != targetBranchCommitMap.get(fileName));
                     if (x && y) {
                         newMap.put(fileName,handelMergeConflict(fileName, currentHeadCommitMap, targetBranchCommitMap));
                         conflictFlag = true;
-                    }
-                    else if (x) {
+                    } else if (x) {
                         newMap.put(fileName, currentHeadCommitMap.get(fileName));
-                    }
-                    else if (y) {
+                    } else if (y) {
                         newMap.put(fileName, targetBranchCommitMap.get(fileName));
                     }
                 }
@@ -657,7 +651,7 @@ public class GitletRepository implements Serializable {
                 }
             }
         }
-        if(conflictFlag == true) {
+        if (conflictFlag == true) {
             System.out.println("Encountered a merge conflict.");
         }
         return newMap;
@@ -676,21 +670,4 @@ public class GitletRepository implements Serializable {
         blob.save();
         return blob.getSHA1();
     }
-
-    /**private static void replaceCWD(String filename,String sha1){
-         overwrite exist file
-        File file = join(CWD,filename);
-        Blob blob = readObject(createFilepathFromSha1(sha1,OBJECT_FOLDER),Blob.class);
-        String content = blob.getContent();
-        if(!file.exists()){
-            try{
-                file.createNewFile();
-            }
-            catch(Exception e){
-                System.err.println(e);
-            }
-        }
-        writeContents(file,content);
-    }
-    */
 }

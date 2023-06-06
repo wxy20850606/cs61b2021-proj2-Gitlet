@@ -50,8 +50,8 @@ public class Commit implements Serializable {
         this.sha1 = sha1(content);
         this.commitFile = createFile(sha1, OBJECT_FOLDER);
     }
-    public Commit(Commit x, Commit y, String currentBranch, String targetBranch, Map<String, String> a) {
-        this.message = "Merged "+ targetBranch + " into " + currentBranch + ".";
+    public Commit(Commit x, Commit y, String branchA, String branchB, Map<String, String> a) {
+        this.message = "Merged "+ branchA + " into " + branchB + ".";
         this.parent1 = x.sha1;
         this.parent2 = y.sha1;
         this.fileToIDMap = a;
