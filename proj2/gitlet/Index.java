@@ -6,7 +6,6 @@ import java.util.*;
 import static gitlet.GitletRepository.*;
 import static gitlet.Utils.*;
 
-
 public class Index implements Serializable {
 
     private final Map<String, String> added;
@@ -22,7 +21,7 @@ public class Index implements Serializable {
         save();
     }
 
-    public void removeFromRemoval(String filename){
+    public void removeFromRemoval(String filename) {
         removal.remove(filename);
         save();
     }
@@ -90,4 +89,5 @@ public class Index implements Serializable {
     public static TreeSet<String> getStageRemoval() {
         return readStagingArea().getRemoval();
     }
+
 }
