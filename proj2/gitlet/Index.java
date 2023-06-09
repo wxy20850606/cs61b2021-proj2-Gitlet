@@ -22,6 +22,10 @@ public class Index implements Serializable {
         save();
     }
 
+    public void removeFromRemoval(String filename){
+        removal.remove(filename);
+        save();
+    }
     public void remove(String filename) {
         added.remove(filename);
         save();

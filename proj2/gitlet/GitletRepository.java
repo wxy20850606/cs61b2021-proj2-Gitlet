@@ -95,14 +95,15 @@ public class GitletRepository implements Serializable {
             //boolean inLastCommit = blobID.equals(map.get(filename));
             /** If the current file is identical to the version in the current commit,not save blob*/
             if (map.get(filename) != null && blobID.equals(map.get(filename))) {
-                if (removalSet.contains(filename)) {
-                    removalSet.remove(filename);
+                if (index.getRemoval().contains(filename)) {
+                    index.getRemoval().remove(filename);
                     index.save();
+                } else {
+                    return;
                 }
             /** if in removalSet, no need to save blob*/
             } else if (removalSet.contains(filename)) {
-                removalSet.remove(filename);
-                index.save();
+                index.removeFromRemoval(filename);
             /** save blob and add it to staging added map*/
             } else {
                 blob.save();
