@@ -96,10 +96,12 @@ public class GitletRepository implements Serializable {
             if (map.get(filename) != null && inLastCommit) {
                 if (removalSet.contains(filename)) {
                     removalSet.remove(filename);
+                    index.save();
                 }
             /** if in removalSet, no need to save blob*/
             } else if (removalSet.contains(filename)) {
                 removalSet.remove(filename);
+                index.save();
             /** save blob and add it to staging added map*/
             } else {
                 blob.save();
