@@ -464,7 +464,7 @@ public class GitletRepository implements Serializable {
             exit("Given branch is an ancestor of the current branch.");
         }
         /** If the split point is the current branch head */
-        if (splitPoint.equals(currentHead)) {
+        if (splitPoint.equals(currentHead.getSHA1())) {
             checkoutBranch(branchName);
             exit("Current branch fast-forwarded.");
         }
@@ -487,7 +487,7 @@ public class GitletRepository implements Serializable {
                 blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
             } else if (inCurrent && inNewMap) {
-                if (!currentHead.getMap().get(filename).equals(newMap.get(filename))){
+                if (!currentHead.getMap().get(filename).equals(newMap.get(filename))) {
                     /** stage for add ,replace file*/
                     String sha1 = newMap.get(filename);
                     index.add(filename, sha1);
