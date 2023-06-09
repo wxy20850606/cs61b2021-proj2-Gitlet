@@ -636,7 +636,6 @@ public class GitletRepository implements Serializable {
             System.out.println("Encountered a merge conflict.");
         }
         return newMap;
-
     }
 
     private static String handelMergeConflict(String filename, Map<String, String> a, Map<String, String> b) {
@@ -648,7 +647,7 @@ public class GitletRepository implements Serializable {
         conflictBuilder.append("<<<<<<< HEAD\n");
         conflictBuilder.append(currentBranchBlob.getContent()).append("\n");
         conflictBuilder.append("=======\n");
-        conflictBuilder.append(targetBranchBlob.getContent()).append("\n>>>>>>>");
+        conflictBuilder.append(targetBranchBlob.getContent()).append("\n>>>>>>>\n");
         /** create new blob*/
         String content = conflictBuilder.toString();
         String content2 = new String(content.getBytes(), StandardCharsets.UTF_8);
