@@ -454,35 +454,27 @@ public class GitletRepository implements Serializable {
             exit("There is an untracked file in the way; delete it, or add and commit it first.");
         }
         /** If the split point is the same commit as the given branch */
-        Commit currentHeadCommit = getLastCommit();
+        Commit currentHead = getLastCommit();
         String headID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
-        Commit targetBranchCommit = readCommit(headID);
-        String splitPoint = getSplitPointID(currentHeadCommit, targetBranchCommit);
-        //String headOfGivenBranch = readContentsAsString(join(REFS_HEADS_FOLDER,branchName));
-        String headOfCurrentBranch = getHeadPointer();
+        Commit targetHead = readCommit(headID);
+        String splitPoint = getSplitPointID(currentHead, targetHead);
+        Commit splitCommit = readCommit(splitPoint);
+        //String headOfCurrentBranch = getHeadPointer();
         if (splitPoint.equals(headID)) {
             exit("Given branch is an ancestor of the current branch.");
         }
-        /** If the split point is the current branch */
-        if (splitPoint.equals(headOfCurrentBranch)) {
+        /** If the split point is the current branch head */
+        if (splitPoint.equals(currentHead)) {
             checkoutBranch(branchName);
             exit("Current branch fast-forwarded.");
         }
-        /** get three commits in order to process 8 steps */
-        Commit splitPointCommit = readCommit(splitPoint);
-        Map<String, String> splitPointCommitMap = splitPointCommit.getMap();
-        Map<String, String> currentHeadCommitMap = currentHeadCommit.getMap();
-        Map<String, String> targetBranchCommitMap = targetBranchCommit.getMap();
-        /** get all filename keys through combine all three map*/
-        Set<String> allFileNameSet = new HashSet<>();
-        allFileNameSet.addAll(splitPointCommit.getMap().keySet());
-        allFileNameSet.addAll(currentHeadCommit.getMap().keySet());
-        allFileNameSet.addAll(targetBranchCommit.getMap().keySet());
+        /** get all filenames*/
+        Set<String> allFile = getfileNameSet(currentHead, targetHead, splitCommit);
         /** get new merge map according to 8 steps */
-        Map<String, String> newMap = getNewMergeMap(branchName);
+        Map<String, String> newMap = getNewMergeMap(currentHead, targetHead, splitCommit);
         /** compare to current branch head commit map to get the difference*/
-        for (String filename :allFileNameSet) {
-            boolean existInCurrentHead = currentHeadCommitMap.containsKey(filename);
+        for (String filename :allFile) {
+            boolean existInCurrentHead = currentHead.getMap().containsKey(filename);
             boolean existInNewMap = newMap.containsKey(filename);
             if (existInCurrentHead && !existInNewMap) {
                 index.getRemoval().add(filename);
@@ -494,19 +486,19 @@ public class GitletRepository implements Serializable {
                 File file = join(CWD, filename);
                 blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
-            } else if (existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename))) {
+            } else if (existInCurrentHead && existInNewMap && !currentHead.getMap().get(filename).equals(newMap.get(filename))) {
                 /** stage for add ,replace file*/
                 String sha1 = newMap.get(filename);
                 index.add(filename, sha1);
                 File file = join(CWD, filename);
-                Blob blob = readBlob(sha1);
+                blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
             } else {
                 continue;
             }
         }
         /** make merge commit */
-        Commit mergeCommit = new Commit(currentHeadCommit, targetBranchCommit, getCurrentBranch(), branchName, newMap);
+        Commit mergeCommit = new Commit(currentHead, targetHead, getCurrentBranch(), branchName, newMap);
         mergeCommit.makeCommit();
         /** clear staging area*/
         index.clear();
@@ -566,52 +558,42 @@ public class GitletRepository implements Serializable {
         return depthMap;
     }
 
-    private static Map<String, String> getNewMergeMap(String branchName) {
+    private static Map<String, String> getNewMergeMap(Commit cur, Commit tar, Commit spl) {
         boolean conflictFlag = false;
         Map<String, String> newMap = new HashMap<>();
-        /** get three commits in order to process 8 steps */
-        String targetBranchID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
-        Commit currentHeadCommit = getLastCommit();
-        Commit targetBranchCommit = readCommit(targetBranchID);
-        String splitPoint = getSplitPointID(currentHeadCommit, targetBranchCommit);
-        Commit splitPointCommit = readCommit(splitPoint);
-        Map<String, String> splitPointCommitMap = splitPointCommit.getMap();
-        Map<String, String> currentHeadCommitMap = currentHeadCommit.getMap();
-        Map<String, String> targetBranchCommitMap = targetBranchCommit.getMap();
         /** get all filename keys through combine all three map*/
-        Set<String> allFileNameSet = new HashSet<>();
-        allFileNameSet.addAll(splitPointCommit.getMap().keySet());
-        allFileNameSet.addAll(currentHeadCommit.getMap().keySet());
-        allFileNameSet.addAll(targetBranchCommit.getMap().keySet());
-
+        Set<String> allFileNameSet = getfileNameSet(cur, tar, spl);
         /** check each file according to 8 steps */
         for (String fileName : allFileNameSet) {
             /**if in splitPoint commit */
-            if (splitPointCommitMap.containsKey(fileName)) {
+            boolean inCurrent = inMap(fileName, cur);
+            boolean inSplit = inMap(fileName, spl);
+            boolean inTarget = inMap(fileName, tar);
+            if (inSplit) {
                 /** if removed in current branch head commit or removed in target branch head commit */
-                if (!currentHeadCommitMap.containsKey(fileName) || !targetBranchCommitMap.containsKey(fileName)) {
+                if (!inCurrent || !inTarget) {
                     continue;
                 } else {
                     /** files in two head commits are different from splitPoint commit, means there is a conflict*/
-                    boolean x = (splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName));
-                    boolean y = (splitPointCommitMap.get(fileName) != targetBranchCommitMap.get(fileName));
+                    boolean x = (spl.getMap().get(fileName) != cur.getMap().get(fileName));
+                    boolean y = (spl.getMap().get(fileName) != tar.getMap().get(fileName));
                     if (x && y) {
-                        newMap.put(fileName, handelMergeConflict(fileName, currentHeadCommitMap, targetBranchCommitMap));
+                        newMap.put(fileName, handelMergeConflict(fileName, cur.getMap(), tar.getMap()));
                         conflictFlag = true;
                     } else if (x) {
-                        newMap.put(fileName, currentHeadCommitMap.get(fileName));
+                        newMap.put(fileName, cur.getMap().get(fileName));
                     } else if (y) {
-                        newMap.put(fileName, targetBranchCommitMap.get(fileName));
+                        newMap.put(fileName, tar.getMap().get(fileName));
                     }
                 }
             } else {
             /** if not exist in splitPoint commit*/
-                if (currentHeadCommitMap.containsKey(fileName) && !targetBranchCommitMap.containsKey(fileName)) {
-                    newMap.put(fileName, currentHeadCommitMap.get(fileName));
-                } else if (!currentHeadCommitMap.containsKey(fileName) && targetBranchCommitMap.containsKey(fileName)) {
-                    newMap.put(fileName, targetBranchCommitMap.get(fileName));
+                if (inCurrent && !inTarget) {
+                    newMap.put(fileName, cur.getMap().get(fileName));
+                } else if (!inCurrent && inTarget) {
+                    newMap.put(fileName, tar.getMap().get(fileName));
                 } else {
-                    newMap.put(fileName, handelMergeConflict(fileName, currentHeadCommitMap, targetBranchCommitMap));
+                    newMap.put(fileName, handelMergeConflict(fileName, cur.getMap(), tar.getMap()));
                     conflictFlag = true;
                 }
             }
@@ -622,6 +604,16 @@ public class GitletRepository implements Serializable {
         return newMap;
     }
 
+    private static boolean inMap(String filename, Commit x){
+        return x.getMap().containsKey(filename);
+    }
+    private static Set<String> getfileNameSet(Commit a, Commit b, Commit c){
+        Set<String> allFileNameSet = new HashSet<String>();
+        allFileNameSet.addAll(a.getMap().keySet());
+        allFileNameSet.addAll(b.getMap().keySet());
+        allFileNameSet.addAll(c.getMap().keySet());
+        return allFileNameSet;
+    }
     private static String handelMergeConflict(String filename, Map<String, String> a, Map<String, String> b) {
         String commitIDInCurrentBranch = a.get(filename);
         String commitIDInTargetBranch = b.get(filename);
