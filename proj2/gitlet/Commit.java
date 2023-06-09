@@ -156,7 +156,7 @@ public class Commit implements Serializable {
         String oldLog = readContentsAsString(LOG_HEAD_FILE);
         logBuilder.append(oldLog).append("\n").append("===\n");
         logBuilder.append("commit ").append(x.getSHA1()).append("\n");
-        logBuilder.append("Date: ").append( x.getTimestamp().toString());
+        logBuilder.append("Date: ").append(x.getTimestamp().toString());
         logBuilder.append("\n").append(x.getMessage()).append("\n");
         writeContents(LOG_HEAD_FILE, logBuilder.toString());
     }

@@ -173,7 +173,7 @@ public class GitletRepository implements Serializable {
     private static void printCommitLog(Commit x) {
         System.out.println("===");
         System.out.println("commit " + x.getSHA1());
-        if (x.getParent2ID() != null){
+        if (x.getParent2ID() != null) {
             String parent1ID = x.getParent1ID().substring(0, 7);
             String parent2ID = x.getParent2ID().substring(0, 7);
             System.out.println("Merge: " + parent1ID + " " + parent2ID);
@@ -319,12 +319,12 @@ public class GitletRepository implements Serializable {
     private static void writeFileByCommit(String commitID, String filename) {
         /** if filename exist in current commit */
         Commit commit = readCommit(commitID);
-        Map<String, String> map = commit.getMap();
+        map = commit.getMap();
         if (map.containsKey(filename)) {
             File file = join(CWD, filename);
             /** overwrite the file if it exists in the working directory */
             String sha1 = map.get(filename);
-            Blob blob = readBlob(sha1);
+            blob = readBlob(sha1);
             if (file.exists()) {
                 writeContents(file, blob.getContent());
             } else {
@@ -492,7 +492,7 @@ public class GitletRepository implements Serializable {
                 String sha1 = newMap.get(filename);
                 index.add(filename, sha1);
                 File file = join(CWD, filename);
-                Blob blob = readBlob(sha1);
+                blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
             } else if (existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename))) {
                 /** stage for add ,replace file*/
@@ -553,17 +553,17 @@ public class GitletRepository implements Serializable {
         return minKey;
     }
     private static Map<String, Integer> getCommitDepthMap(Commit commit, Integer i) {
-        Map<String, Integer> map = new HashMap<>();
+        Map<String, Integer> depthMap = new HashMap<String, Integer>();
         if (!commit.havaParent1()) {
-            map.put(commit.getSHA1(), i);
-            return map;
+            depthMap.put(commit.getSHA1(), i);
+            return depthMap;
         }
-        map.put(commit.getSHA1(), i);
+        depthMap.put(commit.getSHA1(), i);
         i = i + 1;
         for (Commit x:commit.getParent()) {
-            map.putAll(getCommitDepthMap(x, i));
+            depthMap.putAll(getCommitDepthMap(x, i));
         }
-        return map;
+        return depthMap;
     }
 
     private static Map<String, String> getNewMergeMap(String branchName) {
@@ -635,7 +635,7 @@ public class GitletRepository implements Serializable {
         /** create new blob*/
         String content = conflictBuilder.toString();
         String content2 = new String(content.getBytes(), StandardCharsets.UTF_8);
-        Blob blob = new Blob(filename, content2);
+        blob = new Blob(filename, content2);
         blob.save();
         return blob.getSHA1();
     }
@@ -649,5 +649,4 @@ public class GitletRepository implements Serializable {
         File file = createFile(blobID, OBJECT_FOLDER);
         return readObject(file, Commit.class);
     }
-
 }
