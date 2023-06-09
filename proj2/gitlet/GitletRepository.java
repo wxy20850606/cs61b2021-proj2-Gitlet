@@ -2,7 +2,6 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.io.IOException;
 import java.util.*;
 import static gitlet.Utils.writeContents;
 import static gitlet.Utils.*;
@@ -41,9 +40,8 @@ public class GitletRepository implements Serializable {
 
     /** handle the `init` command*/
     public static void init() {
-        /** create all needed folder/files */
+        /** create all needed folder/files and initialize objects*/
         mkDir();
-        //createFile();
         initializeNeededObject();
     }
 
@@ -70,16 +68,7 @@ public class GitletRepository implements Serializable {
         /** write .gitlet/refs/heads/master file */
         writeContents(REFS_HEAD_MASTER_FILE, initialCommit.getSHA1());
 
-        /** write .gitlet/logs/HEAD file     public static void writeToGlobalLog(Commit x) {
-         StringBuilder logBuilder = new StringBuilder();
-         String oldLog = readContentsAsString(LOG_HEAD_FILE);
-         logBuilder.append(oldLog).append("\n").append("===\n");
-         logBuilder.append("commit ").append(x.getSHA1()).append("\n");
-         logBuilder.append("Date: ").append( x.getTimestamp().toString());
-         logBuilder.append("\n").append(x.getMessage()).append("\n");
-         writeContents(LOG_HEAD_FILE, logBuilder.toString());
-         }
-         */
+        /** write .gitlet/logs/HEAD file */
         StringBuilder initLog = new StringBuilder();
         initLog.append("===\n")
                         .append("commit ")
@@ -90,23 +79,10 @@ public class GitletRepository implements Serializable {
                                 .append("\n");
         initLog.append(initialCommit.getMessage())
                         .append("\n");
-
         writeContents(LOG_HEAD_FILE,initLog.toString());
     }
 
-
-    /**private static void createFile() {
-        try{
-            HEAD_FILE.createNewFile();
-            INDEX_FILE.createNewFile();
-            LOG_HEAD_FILE.createNewFile();
-            REFS_HEAD_MASTER_FILE.createNewFile();
-        }
-        catch(Exception e){
-            System.err.println(e);
-        }
-    }
-     */
+    /** add command function*/
     public static void add(String filename) {
         /** given filename exist*/
         if (checkFileExistence(filename)) {
@@ -115,21 +91,23 @@ public class GitletRepository implements Serializable {
             index = readStagingArea();
             map = getLastCommitMap();
             removalSet = getStageRemoval();
-            /** If the current file is identical to the version in the current commit*/
             boolean inLastCommit = blobID.equals(map.get(filename));
+            /** If the current file is identical to the version in the current commit,not save blob*/
             if (map.get(filename) != null && inLastCommit) {
                 if (removalSet.contains(filename)) {
                     removalSet.remove(filename);
-                } else {
-                    return;
                 }
+            /** if in removalSet, no need to save blob*/
             } else if (removalSet.contains(filename)) {
                 removalSet.remove(filename);
+            /** save blob and add it to staging added map*/
             } else {
                 blob.save();
                 index.add(filename, blob.getSHA1());
             }
+            index.save();
         } else {
+            /** given filename not exist*/
             exit("File does not exist.");
         }
     }
@@ -140,9 +118,9 @@ public class GitletRepository implements Serializable {
         if (index.stagingAreaFlag()) {
             exit("No changes added to the commit.");
         }
-        Map<String, String> stagingMap = index.getMap();
+        map = readStageMap();
         /** last commit map add stagingArea map*/
-        Map<String, String> newCommitMap = combine(getLastCommitMap(), stagingMap);
+        Map<String, String> newCommitMap = combine(getLastCommitMap(), map);
         /** minus rm file*/
         TreeSet<String> removalList =  index.getRemoval();
         for (String x : removalList) {
@@ -152,8 +130,6 @@ public class GitletRepository implements Serializable {
         Commit newCommit = new Commit(getLastCommit().getSHA1(), message, newCommitMap);
         newCommit.makeCommit();
         index.clear();
-        /** update logs/refs/heads/branchName file to record the commit history */
-        //updateCommitHistory(newCommit.getSHA1());
     }
 
     public static void rm(String filename) {

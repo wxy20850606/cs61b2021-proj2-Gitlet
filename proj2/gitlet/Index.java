@@ -79,6 +79,10 @@ public class Index implements Serializable {
         return readObject(INDEX_FILE, Index.class);
     }
 
+    public static Map<String, String> readStageMap() {
+        return readStagingArea().getMap();
+    }
+
     public static TreeSet<String> getStageRemoval() {
         return readStagingArea().getRemoval();
     }
