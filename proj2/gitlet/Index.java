@@ -70,4 +70,11 @@ public class Index implements Serializable {
     public boolean stagingAreaFlag() {
         return (added.isEmpty() && removal.isEmpty());
     }
+    public static Index readStagingArea() {
+        return readObject(INDEX_FILE, Index.class);
+    }
+
+    public static TreeSet<String> getStageRemoval(){
+        return readStagingArea().getRemoval();
+    }
 }

@@ -6,6 +6,7 @@ import java.util.*;
 import static gitlet.Utils.writeContents;
 import static gitlet.Utils.*;
 import static gitlet.Commit.*;
+import static gitlet.Index.*;
 /**
  .gitlet
  -HEAD("refs/heads/branch name",current branch pointer)
@@ -25,17 +26,17 @@ public class GitletRepository implements Serializable {
     public static final File INDEX_FILE = join(GITLET_FOLDER, "index");
     public static final File LOG_FOLDER = join(GITLET_FOLDER, "logs");
     public static final File LOG_HEAD_FILE = join(LOG_FOLDER, "HEAD");
-    //public static final File LOG_REFS_FOLDER = join(LOG_FOLDER, "refs");
-    //public static final File LOG_REFS_HEAD_FOLDER = join(LOG_REFS_FOLDER, "heads");
-    //public static final File LOG_REFS_HEAD_MASTER_FILE = join(LOG_REFS_HEAD_FOLDER, "master");
     public static final File OBJECT_FOLDER = join(GITLET_FOLDER, "objects");
     public static final File REFS_FOLDER = join(GITLET_FOLDER, "refs");
     public static final File REFS_HEADS_FOLDER = join(REFS_FOLDER, "heads");
     public static final File REFS_HEAD_MASTER_FILE = join(REFS_HEADS_FOLDER, "master");
 
     private static Index index;
+    private static Blob blob;
     private static Commit currentCommit;
     private static Map<String, String> map;
+
+    private static TreeSet<String> removalSet;
 
     /** handle the `init` command*/
     public static void init() {
@@ -48,19 +49,21 @@ public class GitletRepository implements Serializable {
     public static void add(String filename) {
         /** given filename exist*/
         if (checkFileExistence(filename)) {
-            Blob blob = new Blob(filename);
+            blob = new Blob(filename);
+            String blobID = blob.getSHA1();
             index = readStagingArea();
+            map = getLastCommitMap();
+            removalSet = getStageRemoval();
             /** If the current file is identical to the version in the current commit*/
-            boolean inLastCommit = blob.getSHA1().equals(getLastCommit().getMap().get(filename));
-            if (getLastCommit().getMap().get(filename) != null && inLastCommit) {
-                if (index.getRemoval().contains(filename)) {
-                    index.getRemoval().remove(filename);
-                    index.save();
+            boolean inLastCommit = blobID.equals(map.get(filename));
+            if (map.get(filename) != null && inLastCommit) {
+                if (removalSet.contains(filename)) {
+                    removalSet.remove(filename);
                 } else {
                     return;
                 }
-            } else if (index.getRemoval().contains(filename)) {
-                index.getRemoval().remove(filename);
+            } else if (removalSet.contains(filename)) {
+                removalSet.remove(filename);
             } else {
                 blob.save();
                 index.add(filename, blob.getSHA1());
@@ -71,7 +74,7 @@ public class GitletRepository implements Serializable {
     }
 
     public static void commit(String message) {
-        index = readObject(INDEX_FILE, Index.class);
+        index = readStagingArea();
         /** If no files have been staged, abort.*/
         if (index.stagingAreaFlag()) {
             exit("No changes added to the commit.");
@@ -94,7 +97,7 @@ public class GitletRepository implements Serializable {
 
     public static void rm(String filename) {
         /** Unstage the file if it is currently staged for addition. delete*/
-        index = readObject(INDEX_FILE, Index.class);
+        index = readStagingArea();
         currentCommit = getLastCommit();
         if (index.getMap().containsKey(filename)) {
             index.getMap().remove(filename);
@@ -532,9 +535,11 @@ public class GitletRepository implements Serializable {
         return branchName;
     }
 
-    public static Index readStagingArea() {
+    /**public static Index readStagingArea() {
         return readObject(INDEX_FILE, Index.class);
     }
+     */
+
 
     private static boolean branchExist(String branchName) {
         List<String> branchList = plainFilenamesIn(REFS_HEADS_FOLDER);
