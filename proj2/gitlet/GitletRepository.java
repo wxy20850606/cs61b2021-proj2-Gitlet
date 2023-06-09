@@ -42,10 +42,49 @@ public class GitletRepository implements Serializable {
     public static void init() {
         /** create all needed folder/files */
         mkDir();
-        createFile();
+        //createFile();
         initializeNeededObject();
     }
 
+    private static void mkDir() {
+        GITLET_FOLDER.mkdir();
+        LOG_FOLDER.mkdir();
+        OBJECT_FOLDER.mkdir();
+        REFS_FOLDER.mkdir();
+        REFS_HEADS_FOLDER.mkdir();
+    }
+
+    private static void initializeNeededObject() {
+        /** make initial commit */
+        Commit initialCommit = new Commit("initial commit");
+        File file = createFile(initialCommit.getSHA1(), OBJECT_FOLDER);
+        initialCommit.save();
+
+        /** initialize index object and Serialize it */
+        writeObject(INDEX_FILE, new Index());
+
+        /** write .gitlet/HEAD file */
+        writeContents(HEAD_FILE, "refs/heads/master");
+
+        /** write .gitlet/refs/heads/master file */
+        writeContents(REFS_HEAD_MASTER_FILE, initialCommit.getSHA1());
+
+        /** write .gitlet/logs/HEAD file */
+        writeToGlobalLog(initialCommit);
+    }
+
+
+    private static void createFile() {
+        try{
+            HEAD_FILE.createNewFile();
+            INDEX_FILE.createNewFile();
+            LOG_HEAD_FILE.createNewFile();
+            REFS_HEAD_MASTER_FILE.createNewFile();
+        }
+        catch(Exception e){
+            System.err.println(e);
+        }
+    }
     public static void add(String filename) {
         /** given filename exist*/
         if (checkFileExistence(filename)) {
@@ -402,48 +441,9 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    private static void mkDir() {
-        GITLET_FOLDER.mkdir();
-        LOG_FOLDER.mkdir();
-        //LOG_REFS_FOLDER.mkdir();
-        //LOG_REFS_HEAD_FOLDER.mkdir();
-        OBJECT_FOLDER.mkdir();
-        REFS_FOLDER.mkdir();
-        REFS_HEADS_FOLDER.mkdir();
-    }
 
-    private static void initializeNeededObject() {
-        /** make initial commit */
-        Commit initialCommit = new Commit("initial commit");
-        File file = createFile(initialCommit.getSHA1(), OBJECT_FOLDER);
-        initialCommit.save();
 
-        /** initialize index object and Serialize it */
-        writeObject(INDEX_FILE, new Index());
 
-        /** write .gitlet/HEAD file */
-        writeContents(HEAD_FILE, "refs/heads/master");
-
-        /** write .gitlet/refs/heads/master file */
-        writeContents(REFS_HEAD_MASTER_FILE, initialCommit.getSHA1());
-
-        /** write .gitlet/logs/HEAD file */
-        writeToGlobalLog(initialCommit);
-        /** write .gitlet/logs/refs/heads/master file */
-        //writeContents(LOG_REFS_HEAD_MASTER_FILE, initialCommit.getSHA1());
-    }
-    private static void createFile() {
-        try{
-            HEAD_FILE.createNewFile();
-            INDEX_FILE.createNewFile();
-            LOG_HEAD_FILE.createNewFile();
-            REFS_HEAD_MASTER_FILE.createNewFile();
-            //LOG_REFS_HEAD_MASTER_FILE.createNewFile();
-        }
-        catch(Exception e){
-            System.err.println(e);
-        }
-    }
     public static Map<String, String> combine(Map<String, String> a, Map<String, String> b) {
         Set<String> keyA = a.keySet();
         Set<String> keyB = b.keySet();

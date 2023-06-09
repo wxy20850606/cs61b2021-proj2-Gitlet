@@ -43,6 +43,7 @@ public class Index implements Serializable {
         restrictedDelete(removalFile);
         save();
     }
+
     public Set<String> addedFilesNamesSet() {
         Set<String> keySet = added.keySet();
         return keySet;
@@ -51,6 +52,7 @@ public class Index implements Serializable {
     public static Index fromFile() {
         return readObject(INDEX_FILE, Index.class);
     }
+
     public void save() {
         writeObject(INDEX_FILE, this);
     }
@@ -62,19 +64,22 @@ public class Index implements Serializable {
     public TreeSet<String> getRemoval() {
         return this.removal;
     }
+
     public void clear() {
         added.clear();
         removal.clear();
         save();
     }
+
     public boolean stagingAreaFlag() {
         return (added.isEmpty() && removal.isEmpty());
     }
+
     public static Index readStagingArea() {
         return readObject(INDEX_FILE, Index.class);
     }
 
-    public static TreeSet<String> getStageRemoval(){
+    public static TreeSet<String> getStageRemoval() {
         return readStagingArea().getRemoval();
     }
 }
