@@ -126,6 +126,7 @@ public class GitletRepository implements Serializable {
             }
         }
     }
+
     public static void globalLog() {
         String log = readContentsAsString(LOG_HEAD_FILE);
         System.out.println(log);
@@ -487,9 +488,9 @@ public class GitletRepository implements Serializable {
     public static void printCommitLog(Commit x) {
         System.out.println("===");
         System.out.println("commit " + x.getSHA1());
-        String parent1ID = x.getParent1ID().substring(0, 7);
-        String parent2ID = x.getParent2ID().substring(0, 7);
         if(x.getParent2ID() != null){
+            String parent1ID = x.getParent1ID().substring(0, 7);
+            String parent2ID = x.getParent2ID().substring(0, 7);
             System.out.println("Merge: " + parent1ID + " " + parent2ID);
         }
         System.out.println("Date: " + x.getTimestamp().toString());

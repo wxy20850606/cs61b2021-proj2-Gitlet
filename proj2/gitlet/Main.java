@@ -5,7 +5,7 @@ import static gitlet.Utils.*;
 
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
- *  @author TODO
+ *  @author wxy
  */
 public class Main {
 
@@ -13,8 +13,6 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
     public static void main(String[] args) {
-
-        // TODO: what if args is empty?
         if (args.length == 0) {
             exit("Please enter a command.");
         }
@@ -26,13 +24,11 @@ public class Main {
                 GitletRepository.init();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
                 validateNumArgs(args, 2);
                 validateIfInitialized();
                 String filename = args[1];
                 GitletRepository.add(filename);
                 break;
-            // TODO: FILL THE REST IN
             case "commit":
                 validateMessage(args, 2);
                 validateIfInitialized();
