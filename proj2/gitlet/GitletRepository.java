@@ -10,7 +10,8 @@ import static gitlet.Commit.*;
  .gitlet
  -HEAD("refs/heads/branch name",current branch pointer)
  -index(staging area)
- -logs(maintain all the commit history)
+ -logs
+ ----HEAD(maintain all the commit history)
  -objects(store all the blob/commit object as files)
  -refs(maintain all branch pointers,a branch is a reference to a commit)
  ----heads
@@ -24,9 +25,9 @@ public class GitletRepository implements Serializable {
     public static final File INDEX_FILE = join(GITLET_FOLDER, "index");
     public static final File LOG_FOLDER = join(GITLET_FOLDER, "logs");
     public static final File LOG_HEAD_FILE = join(LOG_FOLDER, "HEAD");
-    public static final File LOG_REFS_FOLDER = join(LOG_FOLDER, "refs");
-    public static final File LOG_REFS_HEAD_FOLDER = join(LOG_REFS_FOLDER, "heads");
-    public static final File LOG_REFS_HEAD_MASTER_FILE = join(LOG_REFS_HEAD_FOLDER, "master");
+    //public static final File LOG_REFS_FOLDER = join(LOG_FOLDER, "refs");
+    //public static final File LOG_REFS_HEAD_FOLDER = join(LOG_REFS_FOLDER, "heads");
+    //public static final File LOG_REFS_HEAD_MASTER_FILE = join(LOG_REFS_HEAD_FOLDER, "master");
     public static final File OBJECT_FOLDER = join(GITLET_FOLDER, "objects");
     public static final File REFS_FOLDER = join(GITLET_FOLDER, "refs");
     public static final File REFS_HEADS_FOLDER = join(REFS_FOLDER, "heads");
@@ -401,8 +402,8 @@ public class GitletRepository implements Serializable {
     private static void mkDir() {
         GITLET_FOLDER.mkdir();
         LOG_FOLDER.mkdir();
-        LOG_REFS_FOLDER.mkdir();
-        LOG_REFS_HEAD_FOLDER.mkdir();
+        //LOG_REFS_FOLDER.mkdir();
+        //LOG_REFS_HEAD_FOLDER.mkdir();
         OBJECT_FOLDER.mkdir();
         REFS_FOLDER.mkdir();
         REFS_HEADS_FOLDER.mkdir();
@@ -426,7 +427,7 @@ public class GitletRepository implements Serializable {
         /** write .gitlet/logs/HEAD file */
         writeToGlobalLog(initialCommit);
         /** write .gitlet/logs/refs/heads/master file */
-        writeContents(LOG_REFS_HEAD_MASTER_FILE, initialCommit.getSHA1());
+        //writeContents(LOG_REFS_HEAD_MASTER_FILE, initialCommit.getSHA1());
     }
     private static void createFile() {
         try{
@@ -434,7 +435,7 @@ public class GitletRepository implements Serializable {
             INDEX_FILE.createNewFile();
             LOG_HEAD_FILE.createNewFile();
             REFS_HEAD_MASTER_FILE.createNewFile();
-            LOG_REFS_HEAD_MASTER_FILE.createNewFile();
+            //LOG_REFS_HEAD_MASTER_FILE.createNewFile();
         }
         catch(Exception e){
             System.err.println(e);
