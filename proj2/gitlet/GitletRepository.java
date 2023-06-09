@@ -621,15 +621,18 @@ public class GitletRepository implements Serializable {
         String commitIDInTargetBranch = b.getMap().get(filename);
         Blob currentBranchBlob = readBlob(commitIDInCurrentBranch);
         Blob targetBranchBlob = readBlob(commitIDInTargetBranch);
+        byte[] currentContent = currentBranchBlob.getContent().getBytes();
+        byte[] targetContent = targetBranchBlob.getContent().getBytes();
+        String currBranchContents = new String(currentContent, StandardCharsets.UTF_8);
+        String targetBranchContents = new String(targetContent, StandardCharsets.UTF_8);
         StringBuilder conflictBuilder = new StringBuilder();
         conflictBuilder.append("<<<<<<< HEAD\n");
-        conflictBuilder.append(currentBranchBlob.getContent()).append("\n");
+        conflictBuilder.append(currBranchContents).append("\n");
         conflictBuilder.append("=======\n");
-        conflictBuilder.append(targetBranchBlob.getContent()).append("\n>>>>>>>\n");
+        conflictBuilder.append(targetBranchContents).append("\n>>>>>>>\n");
         /** create new blob*/
         String content = conflictBuilder.toString();
-        String content2 = new String(content.getBytes(), StandardCharsets.UTF_8);
-        blob = new Blob(filename, content2);
+        blob = new Blob(filename, content);
         blob.save();
         return blob.getSHA1();
     }
