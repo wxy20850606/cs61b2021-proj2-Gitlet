@@ -474,25 +474,27 @@ public class GitletRepository implements Serializable {
         Map<String, String> newMap = getNewMergeMap(currentHead, targetHead, splitCommit);
         /** compare to current branch head commit map to get the difference*/
         for (String filename :allFile) {
-            boolean existInCurrentHead = currentHead.getMap().containsKey(filename);
-            boolean existInNewMap = newMap.containsKey(filename);
-            if (existInCurrentHead && !existInNewMap) {
+            boolean inCurrent = currentHead.getMap().containsKey(filename);
+            boolean inNewMap = newMap.containsKey(filename);
+            if (inCurrent && !inNewMap) {
                 index.getRemoval().add(filename);
                 join(CWD, filename).delete();
-            } else if (!existInCurrentHead && existInNewMap) {
+            } else if (!inCurrent && inNewMap) {
                 /** stage for add ,create new file*/
                 String sha1 = newMap.get(filename);
                 index.add(filename, sha1);
                 File file = join(CWD, filename);
                 blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
-            } else if (existInCurrentHead && existInNewMap && !currentHead.getMap().get(filename).equals(newMap.get(filename))) {
-                /** stage for add ,replace file*/
-                String sha1 = newMap.get(filename);
-                index.add(filename, sha1);
-                File file = join(CWD, filename);
-                blob = readBlob(sha1);
-                writeContents(file, blob.getContent());
+            } else if (inCurrent && inNewMap) {
+                if (!currentHead.getMap().get(filename).equals(newMap.get(filename))){
+                    /** stage for add ,replace file*/
+                    String sha1 = newMap.get(filename);
+                    index.add(filename, sha1);
+                    File file = join(CWD, filename);
+                    blob = readBlob(sha1);
+                    writeContents(file, blob.getContent());
+                }
             } else {
                 continue;
             }
