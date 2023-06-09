@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.io.IOException;
 import java.util.*;
 import static gitlet.Utils.writeContents;
 import static gitlet.Utils.*;
@@ -69,12 +70,32 @@ public class GitletRepository implements Serializable {
         /** write .gitlet/refs/heads/master file */
         writeContents(REFS_HEAD_MASTER_FILE, initialCommit.getSHA1());
 
-        /** write .gitlet/logs/HEAD file */
-        writeToGlobalLog(initialCommit);
+        /** write .gitlet/logs/HEAD file     public static void writeToGlobalLog(Commit x) {
+         StringBuilder logBuilder = new StringBuilder();
+         String oldLog = readContentsAsString(LOG_HEAD_FILE);
+         logBuilder.append(oldLog).append("\n").append("===\n");
+         logBuilder.append("commit ").append(x.getSHA1()).append("\n");
+         logBuilder.append("Date: ").append( x.getTimestamp().toString());
+         logBuilder.append("\n").append(x.getMessage()).append("\n");
+         writeContents(LOG_HEAD_FILE, logBuilder.toString());
+         }
+         */
+        StringBuilder initLog = new StringBuilder();
+        initLog.append("===\n")
+                        .append("commit ")
+                                .append(initialCommit.getSHA1())
+                                        .append("\n");
+        initLog.append("Date: ")
+                        .append(initialCommit.getTimestamp().toString())
+                                .append("\n");
+        initLog.append(initialCommit.getMessage())
+                        .append("\n");
+
+        writeContents(LOG_HEAD_FILE,initLog);
     }
 
 
-    private static void createFile() {
+    /**private static void createFile() {
         try{
             HEAD_FILE.createNewFile();
             INDEX_FILE.createNewFile();
@@ -85,6 +106,7 @@ public class GitletRepository implements Serializable {
             System.err.println(e);
         }
     }
+     */
     public static void add(String filename) {
         /** given filename exist*/
         if (checkFileExistence(filename)) {
