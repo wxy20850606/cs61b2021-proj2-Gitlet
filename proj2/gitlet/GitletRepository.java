@@ -201,7 +201,7 @@ public class GitletRepository implements Serializable {
                 File[] subFolderFiles = file.listFiles();
                 for (File subFile : subFolderFiles) {
                     /** use string bulider to replace + */
-                    StringBuilder fileName= new StringBuilder();
+                    StringBuilder fileName = new StringBuilder();
                     fileName.append(folderName)
                             .append("/")
                             .append(subFile.getName());
@@ -293,8 +293,9 @@ public class GitletRepository implements Serializable {
             /** If that branch is the current branch */
             exit("No need to checkout the current branch.");
         } else if (haveUntrackedFiles()) {
-            /** If a working file is untracked in the current branch and would be overwritten by the checkout  */
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            /** If a working file is untracked in the current branch */
+            String x = "There is an untracked file in the way; delete it, or add and commit it first.";
+            System.out.println(x);
             System.exit(0);
         } else {
             /** recover all the files */
@@ -337,7 +338,7 @@ public class GitletRepository implements Serializable {
             exit("There is an untracked file in the way; delete it, or add and commit it first.");
         } else if (!file.exists()) {
             exit("No commit with that id exists.");
-        }else {
+        } else {
             /** If a working file is untracked in the current branch */
             /** clear cwd */
             writeContents(HEAD_FILE, commitID);
@@ -407,7 +408,7 @@ public class GitletRepository implements Serializable {
         for (String filename :allFileNameSet) {
             boolean existInCurrentHead = currentHeadCommitMap.containsKey(filename);
             boolean existInNewMap = newMap.containsKey(filename);
-            if (existInCurrentHead && !existInNewMap){
+            if (existInCurrentHead && !existInNewMap) {
                 index.getRemoval().add(filename);
                 join(CWD, filename).delete();
             } else if (!existInCurrentHead && existInNewMap) {
@@ -415,12 +416,6 @@ public class GitletRepository implements Serializable {
                 String sha1 = newMap.get(filename);
                 index.add(filename, sha1);
                 File file = join(CWD, filename);
-                try {
-                    file.createNewFile();
-                }
-                catch (Exception ex){
-                    System.err.println(ex);
-                }
                 Blob blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
             } else if(existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename)) ){
