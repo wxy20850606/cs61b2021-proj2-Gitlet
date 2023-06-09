@@ -336,7 +336,6 @@ public class GitletRepository implements Serializable {
         for (String filename :allFileNameSet) {
             boolean existInCurrentHead = currentHeadCommitMap.containsKey(filename);
             boolean existInNewMap = newMap.containsKey(filename);
-            boolean currentEqualNew = currentHeadCommitMap.get(filename).equals(newMap.get(filename));
             if (existInCurrentHead && !existInNewMap){
                 index.getRemoval().add(filename);
                 join(CWD, filename).delete();
@@ -353,7 +352,7 @@ public class GitletRepository implements Serializable {
                 }
                 Blob blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
-            } else if(existInCurrentHead && existInNewMap && !currentEqualNew ){
+            } else if(existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename)) ){
                 /** stage for add ,replace file*/
                 String sha1 = newMap.get(filename);
                 index.add(filename, sha1);
@@ -509,9 +508,14 @@ public class GitletRepository implements Serializable {
                 String folderName = file.getName();
                 File[] subFolderFiles = file.listFiles();
                 for (File subFile : subFolderFiles) {
-                    String subFileName = subFile.getName();
-                    String fileName = folderName + "/" + subFileName;
-                    list.add(fileName);
+                    /** use string bulider to replace + */
+                    StringBuilder fileName= new StringBuilder();
+                    fileName.append(folderName)
+                            .append("/")
+                                    .append(subFile.getName());
+                    //String subFileName = subFile.getName();
+                    //String fileName = folderName + "/" + subFileName;
+                    list.add(fileName.toString());
                 }
             }
         }
