@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import static gitlet.GitletRepository.*;
+import static gitlet.Commit.*;
 import static gitlet.Utils.*;
 
 public class Branch implements Serializable {

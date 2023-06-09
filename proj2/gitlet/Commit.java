@@ -150,4 +150,31 @@ public class Commit implements Serializable {
         String formattedDateTime = currentDateTime.format(formatter);
         return formattedDateTime;
     }
+
+    public static void writeToGlobalLog(Commit x) {
+        StringBuilder logBuilder = new StringBuilder();
+        String oldLog = readContentsAsString(LOG_HEAD_FILE);
+        logBuilder.append(oldLog).append("\n").append("===\n");
+        logBuilder.append("commit ").append(x.getSHA1()).append("\n");
+        logBuilder.append("Date: ").append( x.getTimestamp().toString());
+        logBuilder.append("\n").append(x.getMessage()).append("\n");
+        writeContents(LOG_HEAD_FILE, logBuilder.toString());
+    }
+
+    public static void updateHeadPointerFile(String commitID) {
+        //get current branch's head pointer
+        File refsFile = getHeadPointerFile();
+        writeContents(refsFile, commitID);
+    }
+    public static File getHeadPointerFile() {
+        String head = readContentsAsString(HEAD_FILE);
+        //get current branch's head pointer
+        File refsFile = join(GITLET_FOLDER, head);
+        return refsFile;
+    }
+    public static String getHeadPointer() {
+        File refsFile = getHeadPointerFile();
+        return readContentsAsString(refsFile);
+    }
+
 }
