@@ -433,41 +433,17 @@ public class GitletRepository implements Serializable {
         }
     }
 
+    /** handle merge command */
     public static void merge(String branchName) {
         index = readStagingArea();
-        /** If there are staged additions or removals present */
-        if (!readStagingArea().stagingAreaFlag()) {
-            exit("You have uncommitted changes.");
-        }
-        /** If a branch with the given name does not exist,*/
-        if (!join(REFS_HEADS_FOLDER, branchName).exists()) {
-            exit("A branch with that name does not exist.");
-        }
-        /** If attempting to merge a branch with itself */
-        if (branchName.equals(getCurrentBranch())) {
-            exit("Cannot merge a branch with itself.");
-        }
-        /** If merge generate an error because the commit that it does has no changes in it */
-        //pass
-        /** If an untracked file in the current commit be overwritten or deleted by the merge */
-        if (haveUntrackedFiles()) {
-            exit("There is an untracked file in the way; delete it, or add and commit it first.");
-        }
+        handleFailureCases(branchName);
         /** If the split point is the same commit as the given branch */
         Commit currentHead = getLastCommit();
-        String headID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
-        Commit targetHead = readCommit(headID);
-        String splitPoint = getSplitPointID(currentHead, targetHead);
-        Commit splitCommit = readCommit(splitPoint);
-        //String headOfCurrentBranch = getHeadPointer();
-        if (splitPoint.equals(headID)) {
-            exit("Given branch is an ancestor of the current branch.");
-        }
+        Commit targetHead = readCommitByBranchName(branchName);
+        Commit splitCommit = readCommit(getSplitPointID(currentHead, targetHead));
+        checkIfSplitPintIsGivenBranch(splitCommit, targetHead);
         /** If the split point is the current branch head */
-        if (splitPoint.equals(currentHead.getSHA1())) {
-            checkoutBranch(branchName);
-            exit("Current branch fast-forwarded.");
-        }
+        checkIfSplitPintIsCurrentBranch(branchName, splitCommit, currentHead);
         /** get all filenames*/
         Set<String> allFile = getfileNameSet(currentHead, targetHead, splitCommit);
         /** get new merge map according to 8 steps */
@@ -489,10 +465,10 @@ public class GitletRepository implements Serializable {
             } else if (inCurrent && inNewMap) {
                 if (!currentHead.getMap().get(filename).equals(newMap.get(filename))) {
                     /** stage for add ,replace file*/
-                    String sha1 = newMap.get(filename);
-                    index.add(filename, sha1);
+                    String blobID = newMap.get(filename);
+                    index.add(filename, blobID);
                     File file = join(CWD, filename);
-                    blob = readBlob(sha1);
+                    blob = readBlob(blobID);
                     writeContents(file, blob.getContent());
                 }
             } else {
@@ -506,6 +482,45 @@ public class GitletRepository implements Serializable {
         index.clear();
     }
 
+    private static void checkIfSplitPintIsGivenBranch(Commit split, Commit target){
+        if (split.getSHA1().equals(target.getSHA1())) {
+            exit("Given branch is an ancestor of the current branch.");
+        }
+    }
+    private static void checkIfSplitPintIsCurrentBranch(String branchName, Commit split, Commit current){
+        if (split.getSHA1().equals(current.getSHA1())) {
+            checkoutBranch(branchName);
+            exit("Current branch fast-forwarded.");
+        }
+    }
+    private static Commit readCommitByBranchName(String branchName){
+        String headID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
+        return readCommit(headID);
+    }
+    private static void handleSplitPintIsGivenBranch(String branchName){
+
+    }
+    private static void handleFailureCases(String branchName){
+        index = readStagingArea();
+        /** If there are staged additions or removals present */
+        if (!index.stagingAreaFlag()) {
+            exit("You have uncommitted changes.");
+        }
+        /** If a branch with the given name does not exist,*/
+        if (!join(REFS_HEADS_FOLDER, branchName).exists()) {
+            exit("A branch with that name does not exist.");
+        }
+        /** If attempting to merge a branch with itself */
+        if (branchName.equals(getCurrentBranch())) {
+            exit("Cannot merge a branch with itself.");
+        }
+        /** If merge generate an error because the commit that it does has no changes in it */
+        //pass
+        /** If an untracked file in the current commit be overwritten or deleted by the merge */
+        if (haveUntrackedFiles()) {
+            exit("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
+    }
     public static Map<String, String> combine(Map<String, String> a, Map<String, String> b) {
         Set<String> keyA = a.keySet();
         Set<String> keyB = b.keySet();
