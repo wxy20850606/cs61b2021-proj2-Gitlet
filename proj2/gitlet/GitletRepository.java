@@ -498,12 +498,11 @@ public class GitletRepository implements Serializable {
             }
         }
         /** make merge commit */
-        Commit mergeCommit = new Commit(currentHead, targetHead, getCurrentBranch(), branchName, newMap);
-        mergeCommit.makeCommit();
+        Commit mer = new Commit(currentHead, targetHead, getCurrentBranch(), branchName, newMap);
+        mer.makeCommit();
         /** clear staging area*/
         index.clear();
     }
-
 
     public static Map<String, String> combine(Map<String, String> a, Map<String, String> b) {
         Set<String> keyA = a.keySet();
@@ -570,15 +569,16 @@ public class GitletRepository implements Serializable {
             boolean inSplit = inMap(fileName, spl);
             boolean inTarget = inMap(fileName, tar);
             if (inSplit) {
-                /** if removed in current branch head commit or removed in target branch head commit */
+                /** if removed in current branch head commit or removed in target head commit */
                 if (!inCurrent || !inTarget) {
                     continue;
                 } else {
-                    /** files in two head commits are different from splitPoint commit, means there is a conflict*/
+                    /** files in two head commits are different from splitPoint commit, conflict*/
                     boolean x = (spl.getMap().get(fileName) != cur.getMap().get(fileName));
                     boolean y = (spl.getMap().get(fileName) != tar.getMap().get(fileName));
                     if (x && y) {
-                        newMap.put(fileName, handelMergeConflict(fileName, cur.getMap(), tar.getMap()));
+                        String blobID = handelMergeConflict(fileName, cur, tar);
+                        newMap.put(fileName, blobID);
                         conflictFlag = true;
                     } else if (x) {
                         newMap.put(fileName, cur.getMap().get(fileName));
@@ -593,7 +593,7 @@ public class GitletRepository implements Serializable {
                 } else if (!inCurrent && inTarget) {
                     newMap.put(fileName, tar.getMap().get(fileName));
                 } else {
-                    newMap.put(fileName, handelMergeConflict(fileName, cur.getMap(), tar.getMap()));
+                    newMap.put(fileName, handelMergeConflict(fileName, cur, tar));
                     conflictFlag = true;
                 }
             }
@@ -604,19 +604,19 @@ public class GitletRepository implements Serializable {
         return newMap;
     }
 
-    private static boolean inMap(String filename, Commit x){
+    private static boolean inMap(String filename, Commit x) {
         return x.getMap().containsKey(filename);
     }
-    private static Set<String> getfileNameSet(Commit a, Commit b, Commit c){
+    private static Set<String> getfileNameSet(Commit a, Commit b, Commit c) {
         Set<String> allFileNameSet = new HashSet<String>();
         allFileNameSet.addAll(a.getMap().keySet());
         allFileNameSet.addAll(b.getMap().keySet());
         allFileNameSet.addAll(c.getMap().keySet());
         return allFileNameSet;
     }
-    private static String handelMergeConflict(String filename, Map<String, String> a, Map<String, String> b) {
-        String commitIDInCurrentBranch = a.get(filename);
-        String commitIDInTargetBranch = b.get(filename);
+    private static String handelMergeConflict(String filename, Commit a, Commit b) {
+        String commitIDInCurrentBranch = a.getMap().get(filename);
+        String commitIDInTargetBranch = b.getMap().get(filename);
         Blob currentBranchBlob = readBlob(commitIDInCurrentBranch);
         Blob targetBranchBlob = readBlob(commitIDInTargetBranch);
         StringBuilder conflictBuilder = new StringBuilder();
