@@ -341,7 +341,7 @@ public class GitletRepository implements Serializable {
         } else {
             /** If a working file is untracked in the current branch */
             /** clear cwd */
-            writeContents(HEAD_FILE, commitID);
+            writeContents(getHeadPointerFile(), commitID);
             Commit commit = readCommit(commitID);
             List<String> files = plainFilenamesIn(CWD);
             for (String item:files) {
@@ -354,7 +354,7 @@ public class GitletRepository implements Serializable {
                 checkoutHelper(commit, filename);
             }
             /** update refs/head */
-            writeContents(getHeadPointerFile(),commitID);
+            //writeContents(getHeadPointerFile(),commitID);
         }
     }
 
