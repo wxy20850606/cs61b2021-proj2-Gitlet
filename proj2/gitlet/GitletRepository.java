@@ -353,8 +353,8 @@ public class GitletRepository implements Serializable {
             for (String filename : commit.getMap().keySet()) {
                 checkoutHelper(commit, filename);
             }
-            /** update refs/head */
-            //writeContents(getHeadPointerFile(),commitID);
+            /** clear staging area */
+            readStagingArea().clear();
         }
     }
 
