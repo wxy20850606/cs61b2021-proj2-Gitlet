@@ -504,7 +504,7 @@ public class GitletRepository implements Serializable {
         logBuilder.append("commit ").append(x.getSHA1()).append("\n");
         logBuilder.append("Date: ").append( x.getTimestamp().toString());
         logBuilder.append("\n").append(x.getMessage()).append("\n");
-        writeContents(LOG_HEAD_FILE, logBuilder);
+        writeContents(LOG_HEAD_FILE, logBuilder.toString());
     }
     /** Loop through objects folder to get all the filenames */
     static List<String> getFileNameList(File dir) {

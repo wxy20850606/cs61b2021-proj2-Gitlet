@@ -19,12 +19,6 @@ public class Branch implements Serializable {
         return this.name;
     }
 
-    /**
-
-    public List getCommitIDHistory(){
-        return this.commitIDHistory;
-    }
-     */
     public void create() {
         /** create head pointer file */
         File branchFile = new File(REFS_HEADS_FOLDER, this.name);
