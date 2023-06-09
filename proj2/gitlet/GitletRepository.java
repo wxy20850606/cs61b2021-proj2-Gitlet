@@ -79,7 +79,7 @@ public class GitletRepository implements Serializable {
                                 .append("\n");
         initLog.append(initialCommit.getMessage())
                         .append("\n");
-        writeContents(LOG_HEAD_FILE,initLog.toString());
+        writeContents(LOG_HEAD_FILE, initLog.toString());
     }
 
     /** add command function*/
@@ -91,7 +91,7 @@ public class GitletRepository implements Serializable {
             index = readStagingArea();
             map = getLastCommitMap();
             removalSet = getStageRemoval();
-            /** If the current file is identical to the version in the current commit,not save blob*/
+            /** If the current file is identical to the version in the current commit,no save blob*/
             if (map.get(filename) != null && blobID.equals(map.get(filename))) {
                 if (index.getRemoval().contains(filename)) {
                     index.getRemoval().remove(filename);
@@ -151,7 +151,6 @@ public class GitletRepository implements Serializable {
         }
     }
 
-
     /** log command */
     public static void log() {
         currentCommit = getLastCommit();
@@ -165,6 +164,7 @@ public class GitletRepository implements Serializable {
         }
     }
 
+    /** handle global-log command */
     public static void globalLog() {
         String log = readContentsAsString(LOG_HEAD_FILE);
         System.out.println(log);
@@ -182,7 +182,8 @@ public class GitletRepository implements Serializable {
                     System.out.println(currentCommit.getSHA1());
                     count = count + 1;
                 }
-            } catch (Exception ignore) {
+            } finally {
+                continue;
             }
         }
         if (count == 0) {
