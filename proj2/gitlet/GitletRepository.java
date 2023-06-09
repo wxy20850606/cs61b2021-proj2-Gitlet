@@ -91,9 +91,10 @@ public class GitletRepository implements Serializable {
             index = readStagingArea();
             map = getLastCommitMap();
             removalSet = getStageRemoval();
-            boolean inLastCommit = blobID.equals(map.get(filename));
+            //blob.getSHA1().equals(getLastCommit().getMap().get(filename))
+            //boolean inLastCommit = blobID.equals(map.get(filename));
             /** If the current file is identical to the version in the current commit,not save blob*/
-            if (map.get(filename) != null && inLastCommit) {
+            if (map.get(filename) != null && blobID.equals(map.get(filename))) {
                 if (removalSet.contains(filename)) {
                     removalSet.remove(filename);
                     index.save();

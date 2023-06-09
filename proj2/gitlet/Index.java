@@ -13,8 +13,8 @@ public class Index implements Serializable {
     private final TreeSet<String> removal;
 
     public Index() {
-        added = new HashMap<>();
-        removal = new TreeSet<>();
+        added = new HashMap<String, String>();
+        removal = new TreeSet<String>();
     }
 
     public void add(String filename, String sha1) {
