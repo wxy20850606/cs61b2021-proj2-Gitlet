@@ -153,6 +153,8 @@ public class GitletRepository implements Serializable {
         }
     }
 
+
+    /** log command */
     public static void log() {
         currentCommit = getLastCommit();
         while (currentCommit != null) {
@@ -170,6 +172,7 @@ public class GitletRepository implements Serializable {
         System.out.println(log);
     }
 
+    /** handle find command */
     public static void find(String message) {
         List<String> fileNameList = getFileNameList(OBJECT_FOLDER);
         int count = 0;
@@ -181,8 +184,7 @@ public class GitletRepository implements Serializable {
                     System.out.println(currentCommit.getSHA1());
                     count = count + 1;
                 }
-            } catch (IllegalArgumentException e) {
-                continue;
+            } catch (Exception ignore) {
             }
         }
         if (count == 0) {
@@ -190,18 +192,31 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    public static void branch(String branchName) {
-        List<String> branchNameList = plainFilenamesIn(REFS_HEADS_FOLDER);
-        if (branchNameList.contains(branchName)) {
-            exit("A branch with that name already exists.");
+    /** Loop through objects folder to get all the filenames */
+    private static List<String> getFileNameList(File dir) {
+        List<String> list = new ArrayList<String>();
+        File[] files = dir.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                String folderName = file.getName();
+                File[] subFolderFiles = file.listFiles();
+                for (File subFile : subFolderFiles) {
+                    /** use string bulider to replace + */
+                    StringBuilder fileName= new StringBuilder();
+                    fileName.append(folderName)
+                            .append("/")
+                            .append(subFile.getName());
+                    list.add(fileName.toString());
+                }
+            }
         }
-        Branch newbranch = new Branch(branchName);
-        newbranch.create();
+        return list;
     }
 
+    /** handel status function*/
     public static void status() {
         StringBuilder statusBuilder = new StringBuilder();
-        // branches
+        /** branches */
         statusBuilder.append("=== Branches ===").append("\n");
         List<String> filenames = plainFilenamesIn(REFS_HEADS_FOLDER);
         Collections.sort(filenames);
@@ -213,29 +228,30 @@ public class GitletRepository implements Serializable {
             }
         }
         statusBuilder.append("\n");
-        // Staged files
+
+        /** Staged files */
         statusBuilder.append("=== Staged Files ===").append("\n");
-        List<String> list = new ArrayList<>(readStagingArea().getMap().keySet());
+        List<String> list = new ArrayList<String>(readStageMap().keySet());
         Collections.sort(list);
         for (String str1 : list) {
             statusBuilder.append(str1).append("\n");
         }
         statusBuilder.append("\n");
 
-        // removed files
+        /** removed files */
         statusBuilder.append("=== Removed Files ===").append("\n");
-        for (String str2:readStagingArea().getRemoval()) {
+        for (String str2:getStageRemoval()) {
             statusBuilder.append(str2).append("\n");
         }
         statusBuilder.append("\n");
 
-        // modifications not staged for commit
+        /** modifications not staged for commit */
         statusBuilder.append("=== Modifications Not Staged For Commit ===").append("\n");
         statusBuilder.append("\n");
 
-        // untracked files
+        /** untracked files */
         statusBuilder.append("=== Untracked Files ===").append("\n");
-        List<String> untrackedList = new ArrayList<>(untrackedFiles());
+        List<String> untrackedList = new ArrayList<String>(untrackedFiles());
         Collections.sort(untrackedList);
         for (String str3:untrackedList) {
             if (!str3.equals(".DS_Store")) {
@@ -243,8 +259,19 @@ public class GitletRepository implements Serializable {
             }
         }
         statusBuilder.append("\n");
-        System.out.print(statusBuilder);
+        System.out.print(statusBuilder.toString());
     }
+
+    /** handel branch function*/
+    public static void branch(String branchName) {
+        List<String> branchNameList = plainFilenamesIn(REFS_HEADS_FOLDER);
+        if (branchNameList.contains(branchName)) {
+            exit("A branch with that name already exists.");
+        }
+        Branch newbranch = new Branch(branchName);
+        newbranch.create();
+    }
+
     public static void checkoutFilename(String filename) {
         checkoutHelper(getLastCommit(), filename);
     }
@@ -504,28 +531,6 @@ public class GitletRepository implements Serializable {
         logBuilder.append("Date: ").append( x.getTimestamp().toString());
         logBuilder.append("\n").append(x.getMessage()).append("\n");
         writeContents(LOG_HEAD_FILE, logBuilder.toString());
-    }
-    /** Loop through objects folder to get all the filenames */
-    static List<String> getFileNameList(File dir) {
-        List<String> list = new ArrayList<>();
-        File[] files = dir.listFiles();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                String folderName = file.getName();
-                File[] subFolderFiles = file.listFiles();
-                for (File subFile : subFolderFiles) {
-                    /** use string bulider to replace + */
-                    StringBuilder fileName= new StringBuilder();
-                    fileName.append(folderName)
-                            .append("/")
-                                    .append(subFile.getName());
-                    //String subFileName = subFile.getName();
-                    //String fileName = folderName + "/" + subFileName;
-                    list.add(fileName.toString());
-                }
-            }
-        }
-        return list;
     }
 
     public static String getCurrentBranch() {
