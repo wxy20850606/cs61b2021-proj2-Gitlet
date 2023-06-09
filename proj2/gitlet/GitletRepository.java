@@ -91,7 +91,7 @@ public class GitletRepository implements Serializable {
         initLog.append(initialCommit.getMessage())
                         .append("\n");
 
-        writeContents(LOG_HEAD_FILE,initLog);
+        writeContents(LOG_HEAD_FILE,initLog.toString());
     }
 
 
