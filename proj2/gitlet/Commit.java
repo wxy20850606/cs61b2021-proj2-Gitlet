@@ -120,8 +120,6 @@ public class Commit implements Serializable {
         updateHeadPointerFile(this.getSHA1());
         /** save the commit object */
         save();
-        //modify files according to staging area.
-        //write back any new objects
     }
     public Map<String, String> removeFromCommit(String filename) {
         Commit lastCommit = getLastCommit();

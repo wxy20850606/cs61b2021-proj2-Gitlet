@@ -353,6 +353,8 @@ public class GitletRepository implements Serializable {
             for (String filename : commit.getMap().keySet()) {
                 checkoutHelper(commit, filename);
             }
+            /** update refs/head */
+            writeContents(getHeadPointerFile(),commitID);
         }
     }
 
@@ -417,14 +419,14 @@ public class GitletRepository implements Serializable {
                 File file = join(CWD, filename);
                 Blob blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
-            } else if(existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename)) ){
+            } else if (existInCurrentHead && existInNewMap && !currentHeadCommitMap.get(filename).equals(newMap.get(filename))) {
                 /** stage for add ,replace file*/
                 String sha1 = newMap.get(filename);
                 index.add(filename, sha1);
                 File file = join(CWD, filename);
                 Blob blob = readBlob(sha1);
                 writeContents(file, blob.getContent());
-            } else{
+            } else {
                 continue;
             }
         }
@@ -454,9 +456,6 @@ public class GitletRepository implements Serializable {
         }
     }
 
-
-
-
     public static Map<String, String> combine(Map<String, String> a, Map<String, String> b) {
         Set<String> keyA = a.keySet();
         Set<String> keyB = b.keySet();
@@ -473,7 +472,7 @@ public class GitletRepository implements Serializable {
         File filepath = Utils.join(subFolder, last38);
         return filepath;
     }
-    public static File getHeadPointerFile() {
+    private static File getHeadPointerFile() {
         String head = readContentsAsString(HEAD_FILE);
         //get current branch's head pointer
         File refsFile = join(GITLET_FOLDER, head);
@@ -556,7 +555,7 @@ public class GitletRepository implements Serializable {
         return untrackedFiles().size() >= 1;
     }
 
-    private static String getSplitPointID(Commit currentHead,Commit targetHead) {
+    private static String getSplitPointID(Commit currentHead, Commit targetHead) {
         Map<String, Integer> map1 = getCommitDepthMap(currentHead, 0);
         Map<String, Integer> map2 = getCommitDepthMap(targetHead, 0);
         String minKey = " ";
@@ -613,7 +612,7 @@ public class GitletRepository implements Serializable {
                     boolean x = (splitPointCommitMap.get(fileName) != currentHeadCommitMap.get(fileName));
                     boolean y = (splitPointCommitMap.get(fileName) != targetBranchCommitMap.get(fileName));
                     if (x && y) {
-                        newMap.put(fileName,handelMergeConflict(fileName, currentHeadCommitMap, targetBranchCommitMap));
+                        newMap.put(fileName, handelMergeConflict(fileName, currentHeadCommitMap, targetBranchCommitMap));
                         conflictFlag = true;
                     } else if (x) {
                         newMap.put(fileName, currentHeadCommitMap.get(fileName));
@@ -621,9 +620,8 @@ public class GitletRepository implements Serializable {
                         newMap.put(fileName, targetBranchCommitMap.get(fileName));
                     }
                 }
-            }
+            } else {
             /** if not exist in splitPoint commit*/
-            else {
                 if (currentHeadCommitMap.containsKey(fileName) && !targetBranchCommitMap.containsKey(fileName)) {
                     newMap.put(fileName, currentHeadCommitMap.get(fileName));
                 } else if (!currentHeadCommitMap.containsKey(fileName) && targetBranchCommitMap.containsKey(fileName)) {
