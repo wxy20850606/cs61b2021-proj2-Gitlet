@@ -89,5 +89,4 @@ public class Index implements Serializable {
     public static TreeSet<String> getStageRemoval() {
         return readStagingArea().getRemoval();
     }
-
 }

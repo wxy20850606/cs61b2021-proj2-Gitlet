@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import static gitlet.Utils.writeContents;
 import static gitlet.Utils.*;
@@ -651,7 +652,9 @@ public class GitletRepository implements Serializable {
         conflictBuilder.append("=======\n");
         conflictBuilder.append(targetBranchBlob.getContent()).append("\n>>>>>>>");
         /** create new blob*/
-        Blob blob = new Blob(filename, conflictBuilder.toString());
+        String content = conflictBuilder.toString();
+        String content2 = new String(content.getBytes(), StandardCharsets.UTF_8);
+        Blob blob = new Blob(filename, content2);
         blob.save();
         return blob.getSHA1();
     }
