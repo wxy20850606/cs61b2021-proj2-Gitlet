@@ -8,25 +8,18 @@ import static gitlet.Utils.*;
 import static gitlet.Commit.*;
 /**
  .gitlet
- -HEAD("ref: refs/heads/branch name",current branch pointer)
- -index(staging area,current branch's filenames to sha1s map, associates paths to blobs)
+ -HEAD("refs/heads/branch name",current branch pointer)
+ -index(staging area)
  -logs(maintain all the commit history)
- -HEAD(all commit + branch history)
- -refs
- -heads
- -master(master branch commit history)
- -other branch(other branch commit history)
  -objects(store all the blob/commit object as files)
  -refs(maintain all branch pointers,a branch is a reference to a commit)
- -heads
- -master(main branch's new reference commit id)
- -dog(other branch's new reference commit id)
+ ----heads
+ -------master(main branch's new reference commit id)
+ -------other branch(other branch's new reference commit id)
  */
 public class GitletRepository implements Serializable {
-    /** current working directory*/
     public static final File CWD = new File(System.getProperty("user.dir"));
     public static final File GITLET_FOLDER = join(CWD, ".gitlet");
-    /** file to save last commit id of current branch*/
     public static final File HEAD_FILE = join(GITLET_FOLDER, "HEAD");
     public static final File INDEX_FILE = join(GITLET_FOLDER, "index");
     public static final File LOG_FOLDER = join(GITLET_FOLDER, "logs");
@@ -95,7 +88,7 @@ public class GitletRepository implements Serializable {
         newCommit.makeCommit();
         index.clear();
         /** update logs/refs/heads/branchName file to record the commit history */
-        updateCommitHistory(newCommit.getSHA1());
+        //updateCommitHistory(newCommit.getSHA1());
     }
 
     public static void rm(String filename) {
@@ -375,7 +368,7 @@ public class GitletRepository implements Serializable {
         Commit mergeCommit = new Commit(currentHeadCommit, targetBranchCommit, getCurrentBranch(), branchName, newMap);
         mergeCommit.makeCommit();
         /** update logs/refs/heads file*/
-        updateCommitHistory(mergeCommit.getSHA1());
+        //updateCommitHistory(mergeCommit.getSHA1());
         //Commit currentHeadCommit,Commit targetBranchHead,String currentBranch,String targetBranch,Map<String,String> newmap
         /** clear staging area*/
         index.clear();
@@ -571,12 +564,13 @@ public class GitletRepository implements Serializable {
         return untrackedFiles().size() >= 1;
     }
 
-    public static void updateCommitHistory(String commitID) {
+    /**public static void updateCommitHistory(String commitID) {
         File file = join(LOG_REFS_HEAD_FOLDER,getCurrentBranch());
         String oldHistory = readContentsAsString(file);
         String newHistory = commitID + "\n" + oldHistory;
         writeContents(file, newHistory);
     }
+     */
 
     private static String getSplitPointID(Commit currentHead,Commit targetHead) {
         Map<String, Integer> map1 = getCommitDepthMap(currentHead, 0);
