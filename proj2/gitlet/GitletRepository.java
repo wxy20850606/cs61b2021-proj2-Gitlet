@@ -466,12 +466,13 @@ public class GitletRepository implements Serializable {
                 writeContents(file, blob.getContent());
             } else if (inCurrent && inNewMap) {
                 if (!currentHead.getMap().get(filename).equals(newMap.get(filename))) {
-                    /** conflict, stage for add ,replace file*/
+                    /** conflict, stage for add ,replace file
                     String blobID = newMap.get(filename);
                     index.add(filename, blobID);
                     File file = join(CWD, filename);
                     blob = readBlob(blobID);
-                    writeContents(file, blob.getContent());
+                    writeContents(file, blob.getContent());*/
+                    continue;
                 }
             } else {
                 continue;
@@ -635,7 +636,7 @@ public class GitletRepository implements Serializable {
         String currBranchContents = "";
         if (cur.getMap().containsKey(filename)) {
             String blobIDInCurrentBranch = cur.getMap().get(filename);
-            Blob blob = readBlob(blobIDInCurrentBranch);
+            blob = readBlob(blobIDInCurrentBranch);
             byte[] currentContent = blob.getContent().getBytes();
             currBranchContents = new String(currentContent, StandardCharsets.UTF_8);
         }
@@ -643,7 +644,7 @@ public class GitletRepository implements Serializable {
         String targBranchContents = "";
         if (tar.getMap().containsKey(filename)) {
             String blobIDInCurrentBranch = tar.getMap().get(filename);
-            Blob blob = readBlob(blobIDInCurrentBranch);
+            blob = readBlob(blobIDInCurrentBranch);
             byte[] targetContent = blob.getContent().getBytes();
             targBranchContents = new String(targetContent, StandardCharsets.UTF_8);
         }
