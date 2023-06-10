@@ -601,7 +601,7 @@ public class GitletRepository implements Serializable {
             if (haveConflict(fileName, cur, tar, spl)){
                 String blobID = handelMergeConflict(fileName, cur, tar);
                 newMap.put(fileName, blobID);
-                System.out.println("Encountered a merge conflict.");
+                conflictFlag = true;
                 /** handle other cases*/
             } else if (inSplit && sameBlobID(fileName, spl, cur) && !sameBlobID(fileName, spl, tar)) {
                 newMap.put(fileName, tar.getMap().get(fileName));
@@ -614,6 +614,8 @@ public class GitletRepository implements Serializable {
             } else{
                 continue;
             }
+        }
+        if (conflictFlag) {System.out.println("Encountered a merge conflict.");
         }
         return newMap;
     }
