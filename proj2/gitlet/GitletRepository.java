@@ -601,6 +601,10 @@ public class GitletRepository implements Serializable {
                         newMap.put(fileName, tar.getMap().get(fileName));
                     } else if (y && !x) {
                         newMap.put(fileName, cur.getMap().get(fileName));
+                    } else if (!x && !inTarget) {
+                        String blobID = handelMergeConflict(fileName, cur, tar);
+                        newMap.put(fileName, blobID);
+                        conflictFlag = true;
                     }
                 }
             } else {
