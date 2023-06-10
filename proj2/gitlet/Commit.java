@@ -176,5 +176,4 @@ public class Commit implements Serializable {
         File refsFile = getHeadPointerFile();
         return readContentsAsString(refsFile);
     }
-
 }

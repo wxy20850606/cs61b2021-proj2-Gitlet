@@ -441,9 +441,10 @@ public class GitletRepository implements Serializable {
         Commit currentHead = getLastCommit();
         Commit targetHead = readCommitByBranchName(branchName);
         Commit splitCommit = readCommit(getSplitPointID(currentHead, targetHead));
-        checkIfSplitPintIsGivenBranch(splitCommit, targetHead);
+        /** If the split point is the target branch head */
+        IfSplitIsGivenBranch(splitCommit, targetHead);
         /** If the split point is the current branch head */
-        checkIfSplitPintIsCurrentBranch(branchName, splitCommit, currentHead);
+        IfSplitIsCurrentBranch(branchName, splitCommit, currentHead);
         /** get all filenames*/
         Set<String> allFile = getfileNameSet(currentHead, targetHead, splitCommit);
         /** get new merge map according to 8 steps */
@@ -453,18 +454,19 @@ public class GitletRepository implements Serializable {
             boolean inCurrent = currentHead.getMap().containsKey(filename);
             boolean inNewMap = newMap.containsKey(filename);
             if (inCurrent && !inNewMap) {
+                /** stage for remove ,delete file*/
                 index.getRemoval().add(filename);
                 join(CWD, filename).delete();
             } else if (!inCurrent && inNewMap) {
                 /** stage for add ,create new file*/
-                String sha1 = newMap.get(filename);
-                index.add(filename, sha1);
+                String blobID = newMap.get(filename);
+                index.add(filename, blobID);
                 File file = join(CWD, filename);
-                blob = readBlob(sha1);
+                blob = readBlob(blobID);
                 writeContents(file, blob.getContent());
             } else if (inCurrent && inNewMap) {
                 if (!currentHead.getMap().get(filename).equals(newMap.get(filename))) {
-                    /** stage for add ,replace file*/
+                    /** conflict, stage for add ,replace file*/
                     String blobID = newMap.get(filename);
                     index.add(filename, blobID);
                     File file = join(CWD, filename);
@@ -482,25 +484,23 @@ public class GitletRepository implements Serializable {
         index.clear();
     }
 
-    private static void checkIfSplitPintIsGivenBranch(Commit split, Commit target){
+    private static void IfSplitIsGivenBranch(Commit split, Commit target) {
         if (split.getSHA1().equals(target.getSHA1())) {
             exit("Given branch is an ancestor of the current branch.");
         }
     }
-    private static void checkIfSplitPintIsCurrentBranch(String branchName, Commit split, Commit current){
+    private static void IfSplitIsCurrentBranch(String branchName, Commit split, Commit current) {
         if (split.getSHA1().equals(current.getSHA1())) {
             checkoutBranch(branchName);
             exit("Current branch fast-forwarded.");
         }
     }
-    private static Commit readCommitByBranchName(String branchName){
+    private static Commit readCommitByBranchName(String branchName) {
         String headID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
         return readCommit(headID);
     }
-    private static void handleSplitPintIsGivenBranch(String branchName){
 
-    }
-    private static void handleFailureCases(String branchName){
+    private static void handleFailureCases(String branchName) {
         index = readStagingArea();
         /** If there are staged additions or removals present */
         if (!index.stagingAreaFlag()) {
@@ -591,8 +591,8 @@ public class GitletRepository implements Serializable {
                     continue;
                 } else {
                     /** files in two head commits are different from splitPoint commit, conflict*/
-                    boolean x = (spl.getMap().get(fileName) != cur.getMap().get(fileName));
-                    boolean y = (spl.getMap().get(fileName) != tar.getMap().get(fileName));
+                    boolean x = (spl.getMap().get(fileName).equals(cur.getMap().get(fileName)));
+                    boolean y = (spl.getMap().get(fileName).equals(tar.getMap().get(fileName)));
                     if (x && y) {
                         String blobID = handelMergeConflict(fileName, cur, tar);
                         newMap.put(fileName, blobID);
