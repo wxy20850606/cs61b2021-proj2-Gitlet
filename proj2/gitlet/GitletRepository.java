@@ -591,9 +591,9 @@ public class GitletRepository implements Serializable {
                     continue;
                 } else {
                     /** files in two head commits are different from splitPoint commit, conflict*/
-                    boolean x = !(spl.getMap().get(fileName).equals(cur.getMap().get(fileName)));
-                    boolean y = !(spl.getMap().get(fileName).equals(tar.getMap().get(fileName)));
-                    if ((x && y) || (!inCurrent && inTarget) || (inCurrent && !inTarget)) {
+                    boolean x = (spl.getMap().get(fileName).equals(cur.getMap().get(fileName)));
+                    boolean y = (spl.getMap().get(fileName).equals(tar.getMap().get(fileName)));
+                    if ((!x && !y) || (!inCurrent && inTarget) || (inCurrent && !inTarget)) {
                         String blobID = handelMergeConflict(fileName, cur, tar);
                         newMap.put(fileName, blobID);
                         conflictFlag = true;
