@@ -458,7 +458,7 @@ public class GitletRepository implements Serializable {
                 /** stage for remove ,delete file*/
                 index.getRemoval().add(filename);
                 join(CWD, filename).delete();
-            } else if (inNewMap && sameBlobID(filename, currentMap, newMap)) {
+            } else if (inNewMap && !sameBlobID(filename, currentMap, newMap)) {
                 /** stage for add ,create new file*/
                 String blobID = newMap.get(filename);
                 index.add(filename, blobID);
