@@ -442,9 +442,9 @@ public class GitletRepository implements Serializable {
         Commit targetHead = readCommitByBranchName(branchName);
         Commit splitCommit = readCommit(getSplitPointID(currentHead, targetHead));
         /** If the split point is the target branch head */
-        IfSplitIsGivenBranch(splitCommit, targetHead);
+        ifSplitIsGivenBranch(splitCommit, targetHead);
         /** If the split point is the current branch head */
-        IfSplitIsCurrentBranch(branchName, splitCommit, currentHead);
+        ifSplitIsCurrentBranch(branchName, splitCommit, currentHead);
         /** get all filenames*/
         Set<String> allFile = getfileNameSet(currentHead, targetHead, splitCommit);
         /** get new merge map according to 8 steps */
@@ -484,12 +484,12 @@ public class GitletRepository implements Serializable {
         index.clear();
     }
 
-    private static void IfSplitIsGivenBranch(Commit split, Commit target) {
+    private static void ifSplitIsGivenBranch(Commit split, Commit target) {
         if (split.getSHA1().equals(target.getSHA1())) {
             exit("Given branch is an ancestor of the current branch.");
         }
     }
-    private static void IfSplitIsCurrentBranch(String branchName, Commit split, Commit current) {
+    private static void ifSplitIsCurrentBranch(String branchName, Commit split, Commit current) {
         if (split.getSHA1().equals(current.getSHA1())) {
             checkoutBranch(branchName);
             exit("Current branch fast-forwarded.");
@@ -597,10 +597,10 @@ public class GitletRepository implements Serializable {
                         String blobID = handelMergeConflict(fileName, cur, tar);
                         newMap.put(fileName, blobID);
                         conflictFlag = true;
-                    } else if (x) {
-                        newMap.put(fileName, cur.getMap().get(fileName));
-                    } else if (y) {
+                    } else if (x && !y) {
                         newMap.put(fileName, tar.getMap().get(fileName));
+                    } else if (y && !x) {
+                        newMap.put(fileName, cur.getMap().get(fileName));
                     }
                 }
             } else {
