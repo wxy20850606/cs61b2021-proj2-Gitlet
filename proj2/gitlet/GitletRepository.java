@@ -574,10 +574,10 @@ public class GitletRepository implements Serializable {
             return true;
         } else if (inSplit && inCurrent && !inTarget) {
             return true;
-        } else if (inSplit && inTarget && inCurrent && !sameBlobID(fileName, cur, tar)){
+        } else if (inTarget && inCurrent && !sameBlobID(fileName, cur, tar)){
             return true;
-        } else if(!inSplit && inTarget && inCurrent && !sameBlobID(fileName, cur, tar)) {
-            return true;
+        //} else if(!inSplit && inTarget && inCurrent && !sameBlobID(fileName, cur, tar)) {
+        //    return true;
         } else {
             return false;
         }
@@ -675,15 +675,7 @@ public class GitletRepository implements Serializable {
     }
 
     private static boolean sameBlobID(String fileName, Commit x, Commit y) {
-        if (inMap(fileName, x) && !inMap(fileName, y)) {
-            return false;
-        } else if(!inMap(fileName, x) && inMap(fileName, y)) {
-            return false;
-        } else if(inMap(fileName, x) && inMap(fileName, y)) {
             return x.getMap().get(fileName).equals(y.getMap().get(fileName));
-        } else {
-        return false;
-        }
     }
 
     private static boolean sameBlobID(String fileName, Map<String, String> x, Map<String, String> y) {
