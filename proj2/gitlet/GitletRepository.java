@@ -593,7 +593,7 @@ public class GitletRepository implements Serializable {
                     /** files in two head commits are different from splitPoint commit, conflict*/
                     boolean x = (spl.getMap().get(fileName).equals(cur.getMap().get(fileName)));
                     boolean y = (spl.getMap().get(fileName).equals(tar.getMap().get(fileName)));
-                    if (x && y) {
+                    if ((x && y) || (!inCurrent && inTarget) || (inCurrent && !inTarget)) {
                         String blobID = handelMergeConflict(fileName, cur, tar);
                         newMap.put(fileName, blobID);
                         conflictFlag = true;
@@ -631,23 +631,36 @@ public class GitletRepository implements Serializable {
         allFileNameSet.addAll(c.getMap().keySet());
         return allFileNameSet;
     }
-    private static String handelMergeConflict(String filename, Commit a, Commit b) {
-        String commitIDInCurrentBranch = a.getMap().get(filename);
-        String commitIDInTargetBranch = b.getMap().get(filename);
-        Blob currentBranchBlob = readBlob(commitIDInCurrentBranch);
-        Blob targetBranchBlob = readBlob(commitIDInTargetBranch);
-        byte[] currentContent = currentBranchBlob.getContent().getBytes();
-        byte[] targetContent = targetBranchBlob.getContent().getBytes();
-        String currBranchContents = new String(currentContent, StandardCharsets.UTF_8);
-        String targetBranchContents = new String(targetContent, StandardCharsets.UTF_8);
+    private static String handelMergeConflict(String filename, Commit cur, Commit tar) {
+        String currBranchContents = "";
+        if (cur.getMap().containsKey(filename)) {
+            String blobIDInCurrentBranch = cur.getMap().get(filename);
+            Blob blob = readBlob(blobIDInCurrentBranch);
+            byte[] currentContent = blob.getContent().getBytes();
+            currBranchContents = new String(currentContent, StandardCharsets.UTF_8);
+        }
+
+        String targBranchContents = "";
+        if (tar.getMap().containsKey(filename)) {
+            String blobIDInCurrentBranch = tar.getMap().get(filename);
+            Blob blob = readBlob(blobIDInCurrentBranch);
+            byte[] targetContent = blob.getContent().getBytes();
+            targBranchContents = new String(targetContent, StandardCharsets.UTF_8);
+        }
+
+        String contents = "<<<<<<< HEAD\n" + currBranchContents + "=======\n" + targBranchContents + ">>>>>>>\n";
+        File conflictFile = join(CWD, filename);
+        writeContents(conflictFile, contents);
+        /**
         StringBuilder conflictBuilder = new StringBuilder();
         conflictBuilder.append("<<<<<<< HEAD\n");
         conflictBuilder.append(currBranchContents).append("\n");
         conflictBuilder.append("=======\n");
-        conflictBuilder.append(targetBranchContents).append("\n>>>>>>>\n");
+        conflictBuilder.append(targBranchContents).append("\n>>>>>>>");
+         */
+
         /** create new blob*/
-        String content = conflictBuilder.toString();
-        blob = new Blob(filename, content);
+        blob = new Blob(filename);
         blob.save();
         return blob.getSHA1();
     }
