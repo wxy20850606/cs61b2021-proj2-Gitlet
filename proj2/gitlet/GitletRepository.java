@@ -466,13 +466,12 @@ public class GitletRepository implements Serializable {
                 writeContents(file, blob.getContent());
             } else if (inCurrent && inNewMap) {
                 if (!currentHead.getMap().get(filename).equals(newMap.get(filename))) {
-                    /** conflict, stage for add ,replace file
+
                     String blobID = newMap.get(filename);
                     index.add(filename, blobID);
                     File file = join(CWD, filename);
                     blob = readBlob(blobID);
-                    writeContents(file, blob.getContent());*/
-                    continue;
+                    writeContents(file, blob.getContent());
                 }
             } else {
                 continue;
@@ -633,23 +632,23 @@ public class GitletRepository implements Serializable {
         return allFileNameSet;
     }
     private static String handelMergeConflict(String filename, Commit cur, Commit tar) {
-        String currBranchContents = "";
+        String curContent = "";
         if (cur.getMap().containsKey(filename)) {
             String blobIDInCurrentBranch = cur.getMap().get(filename);
             blob = readBlob(blobIDInCurrentBranch);
             byte[] currentContent = blob.getContent().getBytes();
-            currBranchContents = new String(currentContent, StandardCharsets.UTF_8);
+            curContent = new String(currentContent, StandardCharsets.UTF_8);
         }
 
-        String targBranchContents = "";
+        String tarContent = "";
         if (tar.getMap().containsKey(filename)) {
             String blobIDInCurrentBranch = tar.getMap().get(filename);
             blob = readBlob(blobIDInCurrentBranch);
             byte[] targetContent = blob.getContent().getBytes();
-            targBranchContents = new String(targetContent, StandardCharsets.UTF_8);
+            tarContent = new String(targetContent, StandardCharsets.UTF_8);
         }
 
-        String contents = "<<<<<<< HEAD\n" + currBranchContents + "=======\n" + targBranchContents + ">>>>>>>\n";
+        String contents = "<<<<<<< HEAD\n" + curContent + "=======\n" + tarContent + ">>>>>>>\n";
         File conflictFile = join(CWD, filename);
         writeContents(conflictFile, contents);
         /**
