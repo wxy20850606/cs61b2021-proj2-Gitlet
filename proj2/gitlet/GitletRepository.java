@@ -578,14 +578,19 @@ public class GitletRepository implements Serializable {
         } else if (inSplit && inCurrent && !inTarget) {
             return true;
             /** in/not in spilit, the contents of both are changed and different from other */
-        } else if (inTarget && inCurrent && !sameBlobID(fileName, cur, tar)){
-            System.out.println(!sameBlobID(fileName, cur, tar));
+        } else if (!inSplit && inTarget && inCurrent && notSameBlobID(fileName, cur, tar)) {
             return true;
-        //} else if(!inSplit && inTarget && inCurrent && !sameBlobID(fileName, cur, tar)) {
-        //    return true;
+        } else if(inSplit && inTarget && inCurrent && diffInThreeCommit(fileName, cur, tar, spl)) {
+            return true;
         } else {
             return false;
         }
+    }
+    private static boolean diffInThreeCommit(String fileName, Commit cur, Commit tar, Commit spl) {
+        boolean x = notSameBlobID(fileName, spl, tar);
+        boolean y = notSameBlobID(fileName, spl, cur);
+        boolean z = notSameBlobID(fileName, tar, cur);
+        return (x && y && z);
     }
     private static boolean haveAdd(String fileName, Commit cur, Commit tar, Commit spl){
         return false;
@@ -608,9 +613,9 @@ public class GitletRepository implements Serializable {
                 newMap.put(fileName, blobID);
                 conflictFlag = true;
                 /** handle other cases*/
-            } else if (inSplit && sameBlobID(fileName, spl, cur) && !sameBlobID(fileName, spl, tar)) {
+            } else if (inSplit && notSameBlobID(fileName, spl, cur) && notSameBlobID(fileName, spl, tar)) {
                 newMap.put(fileName, tar.getMap().get(fileName));
-            } else if (inSplit && !sameBlobID(fileName, spl, cur) && sameBlobID(fileName, spl, tar)) {
+            } else if (inSplit && notSameBlobID(fileName, spl, cur) && notSameBlobID(fileName, spl, tar)) {
                 newMap.put(fileName, cur.getMap().get(fileName));
             } else if (!inSplit && !inCurrent && inTarget) {
                 newMap.put(fileName, tar.getMap().get(fileName));
@@ -620,7 +625,8 @@ public class GitletRepository implements Serializable {
                 continue;
             }
         }
-        if (conflictFlag) {System.out.println("Encountered a merge conflict.");
+        if (conflictFlag) {
+            System.out.println("Encountered a merge conflict.");
         }
         return newMap;
     }
@@ -679,10 +685,12 @@ public class GitletRepository implements Serializable {
         return readObject(file, Commit.class);
     }
 
-    private static boolean sameBlobID(String fileName, Commit x, Commit y) {
-            return x.getMap().get(fileName).equals(y.getMap().get(fileName));
+    private static boolean notSameBlobID(String fileName, Commit x, Commit y) {
+            return !x.getMap().get(fileName).equals(y.getMap().get(fileName));
     }
-
+    private static boolean sameBlobID(String fileName, Commit x, Commit y) {
+        return x.getMap().get(fileName).equals(y.getMap().get(fileName));
+    }
     private static boolean sameBlobID(String fileName, Map<String, String> x, Map<String, String> y) {
         boolean a = x.containsKey(fileName);
         boolean b = x.containsKey(fileName);
