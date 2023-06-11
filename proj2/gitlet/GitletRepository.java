@@ -339,12 +339,34 @@ public class GitletRepository implements Serializable {
 
     /** handle checkout [commit id] -- [file name] command*/
     public static void checkoutCommit(String commitID, String filename) {
+        /** handle short uid */
+        if((commitID.length() < 40) && (commitID.length() >= 4)) {
+            commitID = turnShortIDToFull(commitID);
+            if (commitID.equals("w")) {
+                exit("No commit with that id exists.");
+            }
+        }
         File file = createFile(commitID, OBJECT_FOLDER);
         if (!file.exists()) {
             exit("No commit with that id exists.");
         } else {
             writeFileByCommit(commitID, filename);
         }
+    }
+
+    private static String turnShortIDToFull(String shortID){
+        File folder = join(OBJECT_FOLDER, shortID.substring(0, 2));
+        String fullID = "w";
+        Integer length = shortID.length();
+        if (folder.exists()) {
+            List<String> allIDs = plainFilenamesIn(folder);
+            for (String ID:allIDs) {
+                if (shortID.substring(2, length).equals(ID.substring(0, length-2))) {
+                    fullID = ID;
+                }
+            }
+        }
+        return fullID;
     }
 
     /** handel  checkout [branch name] command*/
