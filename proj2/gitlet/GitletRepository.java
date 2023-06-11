@@ -637,10 +637,12 @@ public class GitletRepository implements Serializable {
     }
 
     private static boolean modifiedInCurrent(String fileName, Commit split, Commit cur){
-        return !split.getMap().get(fileName).equals(cur.getMap().get(fileName));
+        boolean x = split.getMap().get(fileName).equals(cur.getMap().get(fileName));
+        return x == false;
     }
     private static boolean modifiedInTarget(String fileName, Commit split, Commit tar){
-        return !split.getMap().get(fileName).equals(tar.getMap().get(fileName));
+        boolean y = split.getMap().get(fileName).equals(tar.getMap().get(fileName));
+        return y == false;
     }
     private static boolean inMap(String filename, Commit x) {
         return x.getMap().containsKey(filename);
