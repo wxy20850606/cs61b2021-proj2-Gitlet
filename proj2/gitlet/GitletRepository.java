@@ -362,7 +362,7 @@ public class GitletRepository implements Serializable {
             List<String> allIDs = plainFilenamesIn(folder);
             for (String ID:allIDs) {
                 if (shortID.substring(2, length).equals(ID.substring(0, length-2))) {
-                    fullID = ID;
+                    fullID = shortID.substring(0, 2) + ID;
                 }
             }
         }
