@@ -40,22 +40,6 @@ public class Index implements Serializable {
         restrictedDelete(removalFile);
     }
 
-    public void unStage(String filename) {
-        added.remove(filename);
-        File removalFile = join(CWD, filename);
-        restrictedDelete(removalFile);
-        save();
-    }
-
-    public Set<String> addedFilesNamesSet() {
-        Set<String> keySet = added.keySet();
-        return keySet;
-    }
-
-    public static Index fromFile() {
-        return readObject(INDEX_FILE, Index.class);
-    }
-
     public void save() {
         writeObject(INDEX_FILE, this);
     }

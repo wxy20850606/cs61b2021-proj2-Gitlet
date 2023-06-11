@@ -121,12 +121,7 @@ public class Commit implements Serializable {
         /** save the commit object */
         save();
     }
-    public Map<String, String> removeFromCommit(String filename) {
-        Commit lastCommit = getLastCommit();
-        Map<String, String> lastcommitMap = lastCommit.getMap();
-        lastcommitMap.remove(filename);
-        return lastcommitMap;
-    }
+
     /** transient fields will not be serialized
     // when back in and deserialized, will be set to their default values.*/
     public void save() {

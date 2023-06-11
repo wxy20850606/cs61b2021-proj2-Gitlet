@@ -83,7 +83,7 @@ public class GitletRepository implements Serializable {
         writeContents(LOG_HEAD_FILE, initLog.toString());
     }
 
-    /** add command function*/
+    /** handle add command */
     public static void add(String filename) {
         /** given filename exist*/
         if (checkFileExistence(filename)) {
@@ -141,6 +141,7 @@ public class GitletRepository implements Serializable {
         index.clear();
     }
 
+    /** handle remove command */
     public static void rm(String filename) {
         /** Unstage the file if it is currently staged for addition. delete*/
         index = readStagingArea();
@@ -157,7 +158,7 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    /** log command */
+    /** handle log command */
     public static void log() {
         currentCommit = getLastCommit();
         while (currentCommit != null) {
@@ -231,7 +232,7 @@ public class GitletRepository implements Serializable {
         return list;
     }
 
-    /** handel status function*/
+    /** handle status function*/
     public static void status() {
         StringBuilder statusBuilder = new StringBuilder();
         /** branches */
@@ -301,7 +302,7 @@ public class GitletRepository implements Serializable {
         return untrackedFiles().size() >= 1;
     }
 
-    /** handel branch function*/
+    /** handle branch function*/
     public static void branch(String branchName) {
         List<String> branchNameList = plainFilenamesIn(REFS_HEADS_FOLDER);
         if (branchNameList.contains(branchName)) {
@@ -369,7 +370,7 @@ public class GitletRepository implements Serializable {
         return fullID;
     }
 
-    /** handel  checkout [branch name] command*/
+    /** handle  checkout [branch name] command*/
     public static void checkoutBranch(String branchName) {
         /** If no branch with that name exists  */
         if (!branchExist(branchName)) {
@@ -403,6 +404,7 @@ public class GitletRepository implements Serializable {
         }
     }
 
+    /** handle remove branch command */
     public static void rmBranch(String branchName) {
         /** If a branch with the given name does not exist, aborts.*/
         if (!branchExist(branchName)) {
@@ -427,7 +429,7 @@ public class GitletRepository implements Serializable {
         return head.contains(branchName);
     }
 
-    /** handel reset command */
+    /** handle reset command */
     public static void reset(String commitID) {
         /** handel short uid */
         if ((commitID.length() < 40) && (commitID.length() >= 4)) {
@@ -488,7 +490,7 @@ public class GitletRepository implements Serializable {
                 index.getRemoval().add(filename);
                 join(CWD, filename).delete();
             } else if (inNewMap && !sameBlobID(filename, currentMap, newMap)) {
-                /** stage for add ,create new file*/
+                /** stage for add ,write new file*/
                 String blobID = newMap.get(filename);
                 index.add(filename, blobID);
                 File file = join(CWD, filename);
@@ -551,6 +553,7 @@ public class GitletRepository implements Serializable {
         }
         return a;
     }
+
     public static File createFile(String sha1, File folder) {
         String first2 = sha1.substring(0, 2);
         String last38 = sha1.substring(2);
@@ -607,10 +610,10 @@ public class GitletRepository implements Serializable {
             /**  the contents of one are changed and the other file is deleted */
         } else if (inSplit && inCurrent && !inTarget && notSameBlobID(fileName, spl, cur)) {
             return true;
-            /** in/not in split, the contents of both are changed and different from other */
+            /** not in split, the contents of both are changed and different from other */
         } else if (!inSplit && inTarget && inCurrent && notSameBlobID(fileName, cur, tar)) {
             return true;
-            /** in/not in split, the contents of both are changed and different from other */
+            /** in all, the contents of both are changed and different from other */
         } else if (inAll && diffInThreeCommit(fileName, cur, tar, spl)) {
             return true;
         }
@@ -622,12 +625,7 @@ public class GitletRepository implements Serializable {
         boolean z = notSameBlobID(fileName, tar, cur);
         return (x && y && z);
     }
-    private static boolean haveAdd(String fileName, Commit cur, Commit tar, Commit spl) {
-        return false;
-    }
-    private static boolean haveRemove(String fileName, Commit cur, Commit tar, Commit spl) {
-        return false;
-    }
+
     private static Map<String, String> getNewMergeMap(Commit cur, Commit tar, Commit spl) {
         boolean conflictFlag = false;
         Map<String, String> newMap = new HashMap<>();
@@ -644,7 +642,7 @@ public class GitletRepository implements Serializable {
                 newMap.put(fileName, blobID);
                 conflictFlag = true;
                 /** handle other cases*/
-                /** in split, modified in current, not modified in target*/
+                /** in all, modified in current, not modified in target*/
             } else if (inAll && modiInCur(fileName, spl, cur) && !modiInTar(fileName, spl, tar)) {
                 newMap.put(fileName, cur.getMap().get(fileName));
                 /** in All, modified in target, not modified in current*/
@@ -705,13 +703,6 @@ public class GitletRepository implements Serializable {
         String contents = "<<<<<<< HEAD\n" + curContent + "=======\n" + tarContent + ">>>>>>>\n";
         File conflictFile = join(CWD, filename);
         writeContents(conflictFile, contents);
-        /**
-        StringBuilder conflictBuilder = new StringBuilder();
-        conflictBuilder.append("<<<<<<< HEAD\n");
-        conflictBuilder.append(currBranchContents).append("\n");
-        conflictBuilder.append("=======\n");
-        conflictBuilder.append(targBranchContents).append("\n>>>>>>>");
-         */
 
         /** create new blob*/
         blob = new Blob(filename);
@@ -732,9 +723,7 @@ public class GitletRepository implements Serializable {
     private static boolean notSameBlobID(String fileName, Commit x, Commit y) {
         return !x.getMap().get(fileName).equals(y.getMap().get(fileName));
     }
-    private static boolean sameBlobID(String fileName, Commit x, Commit y) {
-        return x.getMap().get(fileName).equals(y.getMap().get(fileName));
-    }
+
     private static boolean sameBlobID(String file, Map<String, String> x, Map<String, String> y) {
         boolean a = x.containsKey(file);
         boolean b = x.containsKey(file);

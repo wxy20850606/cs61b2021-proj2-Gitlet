@@ -14,7 +14,7 @@ public class Blob implements Serializable {
     private File blobFile;
     private String filename;
     private String  content;
-    private String blobFileInString;
+
 
     public Blob(String filename) {
         this.filename = filename;
@@ -28,17 +28,11 @@ public class Blob implements Serializable {
         this.content = content;
         this.sha1 = sha1(this.content);
     }
-    public String getFilename() {
-        return this.filename;
-    }
     public String getSHA1() {
         return this.sha1;
     }
     public String getContent() {
         return this.content;
-    }
-    public Map getMap() {
-        return this.blobPathToFileName;
     }
     public File getBlobFile() {
         return this.blobFile;
