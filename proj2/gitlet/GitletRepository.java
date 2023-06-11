@@ -581,9 +581,9 @@ public class GitletRepository implements Serializable {
             /** in/not in spilit, the contents of both are changed and different from other */
         } else if (!inSplit && inTarget && inCurrent && notSameBlobID(fileName, cur, tar)) {
             return true;
-        } else if (inAll && diffInThreeCommit(fileName, cur, tar, spl)) {
+        } /**else if (inAll && diffInThreeCommit(fileName, cur, tar, spl)) {
             return true;
-        } else {
+        } */else {
             return false;
         }
     }
@@ -701,7 +701,7 @@ public class GitletRepository implements Serializable {
     }
 
     private static boolean notSameBlobID(String fileName, Commit x, Commit y) {
-            return !x.getMap().get(fileName).equals(y.getMap().get(fileName));
+        return !x.getMap().get(fileName).equals(y.getMap().get(fileName));
     }
     private static boolean sameBlobID(String fileName, Commit x, Commit y) {
         return x.getMap().get(fileName).equals(y.getMap().get(fileName));
