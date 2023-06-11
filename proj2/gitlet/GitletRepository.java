@@ -572,10 +572,10 @@ public class GitletRepository implements Serializable {
         boolean inSplit = inMap(fileName, spl);
         boolean inTarget = inMap(fileName, tar);
         /**  the contents of one are changed and the other file is deleted */
-        if (inSplit && !inCurrent && inTarget) {
+        if (inSplit && !inCurrent && inTarget && notSameBlobID(fileName, spl, tar)) {
             return true;
             /**  the contents of one are changed and the other file is deleted */
-        } else if (inSplit && inCurrent && !inTarget) {
+        } else if (inSplit && inCurrent && !inTarget && notSameBlobID(fileName, spl, cur)) {
             return true;
             /** in/not in spilit, the contents of both are changed and different from other */
         } else if (!inSplit && inTarget && inCurrent && notSameBlobID(fileName, cur, tar)) {
