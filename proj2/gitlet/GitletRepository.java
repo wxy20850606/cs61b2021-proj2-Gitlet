@@ -578,14 +578,14 @@ public class GitletRepository implements Serializable {
             /**  the contents of one are changed and the other file is deleted */
         } else if (inSplit && inCurrent && !inTarget && notSameBlobID(fileName, spl, cur)) {
             return true;
-            /** in/not in spilit, the contents of both are changed and different from other */
+            /** in/not in split, the contents of both are changed and different from other */
         } else if (!inSplit && inTarget && inCurrent && notSameBlobID(fileName, cur, tar)) {
             return true;
-        } /**else if (inAll && diffInThreeCommit(fileName, cur, tar, spl)) {
+            /** in/not in split, the contents of both are changed and different from other */
+        } else if (inAll && diffInThreeCommit(fileName, cur, tar, spl)) {
             return true;
-        } */else {
-            return false;
         }
+        return false;
     }
     private static boolean diffInThreeCommit(String fileName, Commit cur, Commit tar, Commit spl) {
         boolean x = notSameBlobID(fileName, spl, tar);
