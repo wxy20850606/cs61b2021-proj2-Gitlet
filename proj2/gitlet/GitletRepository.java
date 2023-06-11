@@ -613,14 +613,19 @@ public class GitletRepository implements Serializable {
                 newMap.put(fileName, blobID);
                 conflictFlag = true;
                 /** handle other cases*/
-            } else if (inSplit && notSameBlobID(fileName, spl, cur) && notSameBlobID(fileName, spl, tar)) {
-                newMap.put(fileName, tar.getMap().get(fileName));
-            } else if (inSplit && notSameBlobID(fileName, spl, cur) && notSameBlobID(fileName, spl, tar)) {
+                /** in split, modified in current, not modified in target*/
+            } else if (inSplit && modifiedInCurrent(fileName, spl, cur) && !modifiedInTarget(fileName, spl, tar)) {
                 newMap.put(fileName, cur.getMap().get(fileName));
+                /** in split, modified in target, not modified in current*/
+            } else if (inSplit && !modifiedInCurrent(fileName, spl, cur) && modifiedInTarget(fileName, spl, tar)) {
+                newMap.put(fileName, tar.getMap().get(fileName));
+                /** not in split, not in current, but in target branch*/
             } else if (!inSplit && !inCurrent && inTarget) {
                 newMap.put(fileName, tar.getMap().get(fileName));
+                /** not in split, not in target, but in current branch*/
             } else if (!inSplit && inCurrent && !inTarget) {
                 newMap.put(fileName, cur.getMap().get(fileName));
+                /** in split, deleted in current or target branch, no need to put in new map*/
             } else{
                 continue;
             }
@@ -631,6 +636,12 @@ public class GitletRepository implements Serializable {
         return newMap;
     }
 
+    private static boolean modifiedInCurrent(String fileName, Commit split, Commit cur){
+        return split.getMap().get(fileName).equals(cur.getMap().get(fileName));
+    }
+    private static boolean modifiedInTarget(String fileName, Commit split, Commit tar){
+        return split.getMap().get(fileName).equals(tar.getMap().get(fileName));
+    }
     private static boolean inMap(String filename, Commit x) {
         return x.getMap().containsKey(filename);
     }
