@@ -567,10 +567,11 @@ public class GitletRepository implements Serializable {
         return depthMap;
     }
 
-    private static boolean haveConflict(String fileName, Commit cur, Commit tar, Commit spl){
+    private static boolean haveConflict(String fileName, Commit cur, Commit tar, Commit spl) {
         boolean inCurrent = inMap(fileName, cur);
         boolean inSplit = inMap(fileName, spl);
         boolean inTarget = inMap(fileName, tar);
+        boolean inAll = inSplit && inTarget && inCurrent
         /**  the contents of one are changed and the other file is deleted */
         if (inSplit && !inCurrent && inTarget && notSameBlobID(fileName, spl, tar)) {
             return true;
@@ -580,7 +581,7 @@ public class GitletRepository implements Serializable {
             /** in/not in spilit, the contents of both are changed and different from other */
         } else if (!inSplit && inTarget && inCurrent && notSameBlobID(fileName, cur, tar)) {
             return true;
-        } else if(inSplit && inTarget && inCurrent && diffInThreeCommit(fileName, cur, tar, spl)) {
+        } else if (inAll && diffInThreeCommit(fileName, cur, tar, spl)) {
             return true;
         } else {
             return false;
@@ -592,10 +593,10 @@ public class GitletRepository implements Serializable {
         boolean z = notSameBlobID(fileName, tar, cur);
         return (x && y && z);
     }
-    private static boolean haveAdd(String fileName, Commit cur, Commit tar, Commit spl){
+    private static boolean haveAdd(String fileName, Commit cur, Commit tar, Commit spl) {
         return false;
     }
-    private static boolean haveRemove(String fileName, Commit cur, Commit tar, Commit spl){
+    private static boolean haveRemove(String fileName, Commit cur, Commit tar, Commit spl) {
         return false;
     }
     private static Map<String, String> getNewMergeMap(Commit cur, Commit tar, Commit spl) {
@@ -609,16 +610,16 @@ public class GitletRepository implements Serializable {
             boolean inTarget = inMap(fileName, tar);
             boolean inAll = inSplit && inTarget && inCurrent;
             /** handle conflict cases*/
-            if (haveConflict(fileName, cur, tar, spl)){
+            if (haveConflict(fileName, cur, tar, spl)) {
                 String blobID = handelMergeConflict(fileName, cur, tar);
                 newMap.put(fileName, blobID);
                 conflictFlag = true;
                 /** handle other cases*/
                 /** in split, modified in current, not modified in target*/
-            } else if (inAll && modifiedInCurrent(fileName, spl, cur) && !modifiedInTarget(fileName, spl, tar)) {
+            } else if (inAll && modiInCur(fileName, spl, cur) && !modiInTar(fileName, spl, tar)) {
                 newMap.put(fileName, cur.getMap().get(fileName));
                 /** in All, modified in target, not modified in current*/
-            } else if (inAll && !modifiedInCurrent(fileName, spl, cur) && modifiedInTarget(fileName, spl, tar)) {
+            } else if (inAll && !modiInCur(fileName, spl, cur) && modiInTar(fileName, spl, tar)) {
                 newMap.put(fileName, tar.getMap().get(fileName));
                 /** not in split, not in current, but in target branch*/
             } else if (!inSplit && !inCurrent && inTarget) {
@@ -627,7 +628,7 @@ public class GitletRepository implements Serializable {
             } else if (!inSplit && inCurrent && !inTarget) {
                 newMap.put(fileName, cur.getMap().get(fileName));
                 /** in split, deleted in current or target branch, no need to put in new map*/
-            } else{
+            } else {
                 continue;
             }
         }
@@ -637,13 +638,12 @@ public class GitletRepository implements Serializable {
         return newMap;
     }
 
-    private static boolean modifiedInCurrent(String fileName, Commit split, Commit cur){
-        boolean x = split.getMap().get(fileName).equals(cur.getMap().get(fileName));
-        return x == false;
+    private static boolean modiInCur(String fileName, Commit split, Commit cur) {
+        return !split.getMap().get(fileName).equals(cur.getMap().get(fileName));
+
     }
-    private static boolean modifiedInTarget(String fileName, Commit split, Commit tar){
-        boolean y = split.getMap().get(fileName).equals(tar.getMap().get(fileName));
-        return y == false;
+    private static boolean modiInTar(String fileName, Commit split, Commit tar) {
+        return  !split.getMap().get(fileName).equals(tar.getMap().get(fileName));
     }
 
     private static boolean inMap(String filename, Commit x) {
@@ -706,15 +706,15 @@ public class GitletRepository implements Serializable {
     private static boolean sameBlobID(String fileName, Commit x, Commit y) {
         return x.getMap().get(fileName).equals(y.getMap().get(fileName));
     }
-    private static boolean sameBlobID(String fileName, Map<String, String> x, Map<String, String> y) {
-        boolean a = x.containsKey(fileName);
-        boolean b = x.containsKey(fileName);
+    private static boolean sameBlobID(String file, Map<String, String> x, Map<String, String> y) {
+        boolean a = x.containsKey(file);
+        boolean b = x.containsKey(file);
         if (a && !b) {
             return false;
-        } else if(!a && b) {
+        } else if (!a && b) {
             return false;
-        } else if(a && b) {
-            return x.get(fileName).equals(y.get(fileName));
+        } else if (a && b) {
+            return x.get(file).equals(y.get(file));
         } else {
             return false;
         }
