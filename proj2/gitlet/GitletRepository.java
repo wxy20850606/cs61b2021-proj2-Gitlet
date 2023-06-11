@@ -340,7 +340,7 @@ public class GitletRepository implements Serializable {
     /** handle checkout [commit id] -- [file name] command*/
     public static void checkoutCommit(String commitID, String filename) {
         /** handle short uid */
-        if((commitID.length() < 40) && (commitID.length() >= 4)) {
+        if ((commitID.length() < 40) && (commitID.length() >= 4)) {
             commitID = turnShortIDToFull(commitID);
             if (commitID.equals("w")) {
                 exit("No commit with that id exists.");
@@ -354,15 +354,15 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    private static String turnShortIDToFull(String shortID){
+    private static String turnShortIDToFull(String shortID) {
         File folder = join(OBJECT_FOLDER, shortID.substring(0, 2));
         String fullID = "w";
         Integer length = shortID.length();
         if (folder.exists()) {
             List<String> allIDs = plainFilenamesIn(folder);
-            for (String ID:allIDs) {
-                if (shortID.substring(2, length).equals(ID.substring(0, length-2))) {
-                    fullID = shortID.substring(0, 2) + ID;
+            for (String id:allIDs) {
+                if (shortID.substring(2, length).equals(id.substring(0, length - 2))) {
+                    fullID = shortID.substring(0, 2) + id;
                 }
             }
         }
@@ -429,6 +429,13 @@ public class GitletRepository implements Serializable {
 
     /** handel reset command */
     public static void reset(String commitID) {
+        /** handel short uid */
+        if ((commitID.length() < 40) && (commitID.length() >= 4)) {
+            commitID = turnShortIDToFull(commitID);
+            if (commitID.equals("w")) {
+                exit("No commit with that id exists.");
+            }
+        }
         /** If no commit with the given id exist */
         File file = createFile(commitID, OBJECT_FOLDER);
         if (haveUntrackedFiles()) {
