@@ -22,8 +22,7 @@ public class Commit implements Serializable {
     private String parent2;
     private String message;
     private String sha1;
-    private File commitFile;
-    private String commitFilePath;
+    //private File commitFile;
     private Map<String, String> fileToIDMap;
 
     /** The constructor of first Commit. */
@@ -32,8 +31,7 @@ public class Commit implements Serializable {
         this.message = message;
         this.sha1 = sha1(this.message);
         this.fileToIDMap = new HashMap<>();
-        this.commitFile = createFile(sha1, OBJECT_FOLDER);
-        this.commitFilePath = commitFile.toString();
+        //this.commitFile = createFile(sha1, OBJECT_FOLDER);
     }
 
     public Commit(String parent1, String message, Map<String, String> map) {
@@ -43,7 +41,7 @@ public class Commit implements Serializable {
         this.fileToIDMap = map;
         String content = parent1 + message + timestamp.toString() + fileToIDMap.toString();
         this.sha1 = sha1(content);
-        this.commitFile = createFile(sha1, OBJECT_FOLDER);
+        //this.commitFile = createFile(sha1, OBJECT_FOLDER);
     }
     public Commit(Commit x, Commit y, String branchA, String branchB, Map<String, String> a) {
         this.message = "Merged " + branchB + " into " + branchA + ".";
@@ -52,7 +50,7 @@ public class Commit implements Serializable {
         this.fileToIDMap = a;
         this.timestamp = formatDate();
         this.sha1 = sha1(parent1 + parent2 + message + timestamp.toString() + a.toString());
-        this.commitFile = createFile(this.sha1, OBJECT_FOLDER);
+        //this.commitFile = createFile(this.sha1, OBJECT_FOLDER);
     }
     public String getMessage() {
         return this.message;
@@ -115,7 +113,8 @@ public class Commit implements Serializable {
     }
 
     public void save() {
-        writeObject(this.commitFile, this);
+        File file = createFile(this.getSHA1(), OBJECT_FOLDER);
+        writeObject(file, this);
     }
 
     public static Commit getLastCommit() {
@@ -136,7 +135,7 @@ public class Commit implements Serializable {
         return formattedDateTime;
     }
 
-    private void writeToGlobalLog(Commit x) {
+    private static void writeToGlobalLog(Commit x) {
         StringBuilder logBuilder = new StringBuilder();
         String oldLog = readContentsAsString(LOG_HEAD_FILE);
         logBuilder.append(oldLog).append("\n").append("===\n");
@@ -146,7 +145,7 @@ public class Commit implements Serializable {
         writeContents(LOG_HEAD_FILE, logBuilder.toString());
     }
 
-    private void updateHeadPointerFile(String commitID) {
+    private static void updateHeadPointerFile(String commitID) {
         //get current branch's head pointer
         File refsFile = getHeadPointerFile();
         writeContents(refsFile, commitID);

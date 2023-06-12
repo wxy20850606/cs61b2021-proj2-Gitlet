@@ -131,7 +131,7 @@ public class Main {
         }
     }
 
-    private void validateNotInited() {
+    private static void validateNotInited() {
         if (GitletRepository.GITLET_FOLDER.exists()) {
             exit("A Gitlet version-control system already exists in the current directory.");
         }
