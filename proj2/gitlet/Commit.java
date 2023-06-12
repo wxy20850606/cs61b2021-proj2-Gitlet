@@ -16,12 +16,7 @@ import static gitlet.GitletRepository.*;
 public class Commit implements Serializable {
     static final File COMMIT_FOLDER = Utils.join(GitletRepository.GITLET_FOLDER, "objects");
 
-    /**
-     * List all instance variables of the Commit class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided one example for `message`.
-
-    /** java.util.Date and java.util.Formatter are useful for getting and formatting times.*/
+    /** */
     private String timestamp;
     private String parent1;
     private String parent2;
@@ -101,9 +96,6 @@ public class Commit implements Serializable {
     public String getParent1ID() {
         return this.parent1;
     }
-    public String getSecondParent() {
-        return this.parent2;
-    }
 
     public String getSHA1() {
         return this.sha1;
@@ -122,8 +114,6 @@ public class Commit implements Serializable {
         save();
     }
 
-    /** transient fields will not be serialized
-    // when back in and deserialized, will be set to their default values.*/
     public void save() {
         writeObject(this.commitFile, this);
     }
@@ -139,14 +129,14 @@ public class Commit implements Serializable {
     public static Map<String, String> getLastCommitMap() {
         return getLastCommit().getMap();
     }
-    public static String formatDate() {
+    private static String formatDate() {
         OffsetDateTime currentDateTime = OffsetDateTime.now(ZoneOffset.UTC);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss yyyy Z");
         String formattedDateTime = currentDateTime.format(formatter);
         return formattedDateTime;
     }
 
-    public static void writeToGlobalLog(Commit x) {
+    private void writeToGlobalLog(Commit x) {
         StringBuilder logBuilder = new StringBuilder();
         String oldLog = readContentsAsString(LOG_HEAD_FILE);
         logBuilder.append(oldLog).append("\n").append("===\n");
@@ -156,7 +146,7 @@ public class Commit implements Serializable {
         writeContents(LOG_HEAD_FILE, logBuilder.toString());
     }
 
-    public static void updateHeadPointerFile(String commitID) {
+    private void updateHeadPointerFile(String commitID) {
         //get current branch's head pointer
         File refsFile = getHeadPointerFile();
         writeContents(refsFile, commitID);

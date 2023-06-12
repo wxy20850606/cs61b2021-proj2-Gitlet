@@ -112,26 +112,26 @@ public class Main {
      * @param args Argument array from command line
      * @param n Number of expected arguments
      */
-    public static void validateNumArgs(String[] args, int n) {
+    private static void validateNumArgs(String[] args, int n) {
         if (args.length != n) {
             exit("Incorrect operands.");
         }
     }
 
-    public static void validateMessage(String[] args, int n) {
+    private static void validateMessage(String[] args, int n) {
         if (args.length != n || args[1].trim().length() == 0){
             exit("Please enter a commit message.");
         }
     }
 
     //case:Not in an initialized Gitlet directory.(check if current directory containing a .gitlet subdirectory)TODO
-    public static void validateIfInitialized() {
+    private static void validateIfInitialized() {
         if (!GitletRepository.GITLET_FOLDER.exists()) {
             exit("Not in an initialized Gitlet directory.");
         }
     }
 
-    public static void validateNotInited() {
+    private void validateNotInited() {
         if (GitletRepository.GITLET_FOLDER.exists()) {
             exit("A Gitlet version-control system already exists in the current directory.");
         }

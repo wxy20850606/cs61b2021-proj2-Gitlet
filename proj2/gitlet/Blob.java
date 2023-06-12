@@ -8,7 +8,7 @@ import java.util.Map;
 import static gitlet.GitletRepository.*;
 import static gitlet.Utils.*;
 public class Blob implements Serializable {
-    private Map<String, String> blobPathToFileName = new TreeMap<>();
+    //private Map<String, String> fileNametoBlobMap= new TreeMap<>();
     private String sha1;
     private File originalFile;
     private File blobFile;
@@ -23,22 +23,24 @@ public class Blob implements Serializable {
         this.sha1 = sha1(this.content);
     }
 
+    /**
     public Blob(String filename, String content) {
         this.filename = filename;
         this.content = content;
         this.sha1 = sha1(this.content);
     }
+     */
     public String getSHA1() {
         return this.sha1;
     }
     public String getContent() {
         return this.content;
     }
-    public File getBlobFile() {
-        return this.blobFile;
-    }
     public void save() {
         this.blobFile = createFile(sha1, OBJECT_FOLDER);
         writeObject(this.getBlobFile(), this);
+    }
+    private File getBlobFile() {
+        return this.blobFile;
     }
 }

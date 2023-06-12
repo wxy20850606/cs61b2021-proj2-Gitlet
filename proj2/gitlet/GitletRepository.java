@@ -36,7 +36,6 @@ public class GitletRepository implements Serializable {
     private static Blob blob;
     private static Commit currentCommit;
     private static Map<String, String> map;
-
     private static TreeSet<String> removalSet;
 
     /** handle the `init` command*/
@@ -467,8 +466,8 @@ public class GitletRepository implements Serializable {
     /** handle merge command */
     public static void merge(String branchName) {
         index = readStagingArea();
+        /** check all failure cases */
         handleFailureCases(branchName);
-        /** If the split point is the same commit as the given branch */
         Commit currentHead = getLastCommit();
         Commit targetHead = readCommitByBranchName(branchName);
         Commit splitCommit = readCommit(getSplitPointID(currentHead, targetHead));
@@ -476,21 +475,21 @@ public class GitletRepository implements Serializable {
         ifSplitIsGivenBranch(splitCommit, targetHead);
         /** If the split point is the current branch head */
         ifSplitIsCurrentBranch(branchName, splitCommit, currentHead);
-        /** get all filenames*/
+        /** get all filenames */
         Set<String> allFile = getfileNameSet(currentHead, targetHead, splitCommit);
         /** get new merge map according to 8 steps */
         Map<String, String> newMap = getNewMergeMap(currentHead, targetHead, splitCommit);
+        /** compare to current branch head commit map to handle the difference */
         Map<String, String> currentMap = currentHead.getMap();
-        /** compare to current branch head commit map to get the difference*/
         for (String filename :allFile) {
             boolean inCurrent = inMap(filename, currentHead);
             boolean inNewMap = newMap.containsKey(filename);
             if (inCurrent && !inNewMap) {
-                /** stage for remove ,delete file*/
+                /** stage for remove ,delete file */
                 index.getRemoval().add(filename);
                 join(CWD, filename).delete();
             } else if (inNewMap && !sameBlobID(filename, currentMap, newMap)) {
-                /** stage for add ,write new file*/
+                /** stage for add ,write new file */
                 String blobID = newMap.get(filename);
                 index.add(filename, blobID);
                 File file = join(CWD, filename);
