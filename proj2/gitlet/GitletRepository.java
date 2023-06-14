@@ -132,7 +132,7 @@ public class GitletRepository implements Serializable {
         index.clear();
     }
 
-    private static Map<String, String> getUpdatedMap(){
+    private static Map<String, String> getUpdatedMap() {
         Index index = readStagingArea();
         /** get stage added map */
         Map<String, String> map = readStageMap();
@@ -145,23 +145,21 @@ public class GitletRepository implements Serializable {
         }
         return newCommitMap;
     }
+
     /** handle remove command */
     public static void rm(String filename) {
         /** Unstage the file if it is currently staged for addition. delete*/
         Index index = readStagingArea();
         if (index.getMap().containsKey(filename)) {
             index.getMap().remove(filename);
-            index.save();
         } else if (getLastCommitMap().containsKey(filename)) {
             /** If the file is tracked in the current commit, stage it for removal ,delete*/
             index.stageRemoval(filename);
-            index.save();
         } else {
             /** If the file is neither staged nor tracked by the head commit */
             exit("No reason to remove the file.");
         }
     }
-
     /** handle log command */
     public static void log() {
         Commit currentCommit = getLastCommit();
