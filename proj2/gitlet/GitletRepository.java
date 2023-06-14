@@ -336,11 +336,10 @@ public class GitletRepository implements Serializable {
         /** update the uid if user input short uid */
         String newCommitID = handleShortID(commitID);
         File file = createFile(newCommitID, OBJECT_FOLDER);
-        if (!file.exists()) {
-            exit("No commit with that id exists.");
-        } else {
-            writeFileByCommit(newCommitID, filename);
-        }
+        /** exist if not exist */
+        exitIfFileNotExist(file);
+        /** if exist, write file */
+        writeFileByCommit(newCommitID, filename);
     }
 
     private static String handleShortID(String commitID) {
@@ -446,25 +445,28 @@ public class GitletRepository implements Serializable {
         /** handel short uid */
         String newCommitID = handleShortID(commitID);
         File file = createFile(newCommitID, OBJECT_FOLDER);
+        exitIfFileNotExist(file);
+        /** If a working file is untracked in the current branch */
+        /** clear cwd */
+        writeContents(getHeadPointerFile(), newCommitID);
+        Commit commit = readCommit(newCommitID);
+        List<String> files = plainFilenamesIn(CWD);
+        for (String item:files) {
+            if (!commit.getMap().containsKey(item)) {
+                join(CWD, item).delete();
+            }
+        }
+        /** recover cwd */
+        for (String filename : commit.getMap().keySet()) {
+            writeFileByCommit(newCommitID, filename);
+        }
+        /** clear staging area */
+        readStagingArea().clear();
+    }
+
+    private static void exitIfFileNotExist(File file){
         if (!file.exists()) {
             exit("No commit with that id exists.");
-        } else {
-            /** If a working file is untracked in the current branch */
-            /** clear cwd */
-            writeContents(getHeadPointerFile(), newCommitID);
-            Commit commit = readCommit(newCommitID);
-            List<String> files = plainFilenamesIn(CWD);
-            for (String item:files) {
-                if (!commit.getMap().containsKey(item)) {
-                    join(CWD, item).delete();
-                }
-            }
-            /** recover cwd */
-            for (String filename : commit.getMap().keySet()) {
-                writeFileByCommit(newCommitID, filename);
-            }
-            /** clear staging area */
-            readStagingArea().clear();
         }
     }
 
