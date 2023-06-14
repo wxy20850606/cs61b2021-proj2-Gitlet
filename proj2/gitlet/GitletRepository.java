@@ -161,6 +161,7 @@ public class GitletRepository implements Serializable {
         }
         index.save();
     }
+
     /** handle log command */
     public static void log() {
         Commit currentCommit = getLastCommit();
@@ -332,14 +333,9 @@ public class GitletRepository implements Serializable {
 
     /** handle checkout [commit id] -- [file name] command*/
     public static void checkoutCommit(String commitID, String filename) {
-        /** handle short uid */
-        if ((commitID.length() < 40) && (commitID.length() >= 4)) {
-            commitID = turnShortIDToFull(commitID);
-            if (commitID.equals("w")) {
-                exit("No commit with that id exists.");
-            }
-        }
-        File file = createFile(commitID, OBJECT_FOLDER);
+        /** update the uid if user input short uid */
+        String newCommitID = handleShortID(commitID);
+        File file = createFile(newCommitID, OBJECT_FOLDER);
         if (!file.exists()) {
             exit("No commit with that id exists.");
         } else {
@@ -347,6 +343,17 @@ public class GitletRepository implements Serializable {
         }
     }
 
+    private static String handleShortID(String commitID){
+        if ((commitID.length() < 40) && (commitID.length() >= 4)) {
+            commitID = turnShortIDToFull(commitID);
+            if (commitID.equals("w")) {
+                exit("No commit with that id exists.");
+            }
+        } else {
+            return commitID;
+        }
+        return commitID;
+    }
     private static String turnShortIDToFull(String shortID) {
         File folder = join(OBJECT_FOLDER, shortID.substring(0, 2));
         String fullID = "w";
