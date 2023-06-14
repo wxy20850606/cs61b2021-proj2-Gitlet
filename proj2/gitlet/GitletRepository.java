@@ -372,18 +372,13 @@ public class GitletRepository implements Serializable {
 
     /** handle  checkout [branch name] command*/
     public static void checkoutBranch(String branchName) {
+        exitIfHaveUntracked();
         /** If no branch with that name exists  */
         if (!branchExist(branchName)) {
             exit("No such branch exists.");
         } else if (ifOnCurrentBranch(branchName)) {
             /** If that branch is the current branch */
             exit("No need to checkout the current branch.");
-        } else if (haveUntrackedFiles()) {
-            /** If a working file is untracked in the current branch */
-            String x = " ";
-            x = "There is an untracked file in the way; delete it, or add and commit it first.";
-            System.out.println(x);
-            System.exit(0);
         } else {
             /** recover all the files */
             String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
@@ -401,6 +396,12 @@ public class GitletRepository implements Serializable {
             /** update the HEAD file*/
             String head = "refs/heads/" + branchName;
             writeContents(HEAD_FILE, head);
+        }
+    }
+
+    private static void exitIfHaveUntracked() {
+        if (haveUntrackedFiles()) {
+            exit("There is an untracked file in the way; delete it, or add and commit it first.");
         }
     }
 
@@ -441,13 +442,11 @@ public class GitletRepository implements Serializable {
 
     /** handle reset command */
     public static void reset(String commitID) {
+        exitIfHaveUntracked();
         /** handel short uid */
         String newCommitID = handleShortID(commitID);
-        /** If no commit with the given id exist */
         File file = createFile(newCommitID, OBJECT_FOLDER);
-        if (haveUntrackedFiles()) {
-            exit("There is an untracked file in the way; delete it, or add and commit it first.");
-        } else if (!file.exists()) {
+        if (!file.exists()) {
             exit("No commit with that id exists.");
         } else {
             /** If a working file is untracked in the current branch */
