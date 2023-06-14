@@ -77,7 +77,7 @@ public class GitletRepository implements Serializable {
     }
 
     /** handle add command */
-    public static void add(String filename) {
+    public static void add2(String filename) {
         Index index = readStagingArea();
         TreeSet<String> removalSet = getStageRemoval();
         /** given filename exist*/
@@ -85,28 +85,62 @@ public class GitletRepository implements Serializable {
             Blob blob = new Blob(filename);
             String blobID = blob.getSHA1();
             Map<String, String> map = getLastCommitMap();
-            /** If the current file is identical to the version in the current commit,not save blob*/
-            if (map.get(filename) != null && blobID.equals(map.get(filename))) {
-                if (index.getRemoval().contains(filename)) {
-                    index.getRemoval().remove(filename);
+                    /** If the current file is identical to the version in the current commit,no save blob*/
+                    if (map.get(filename) != null && blobID.equals(map.get(filename))) {
+                        if (index.getRemoval().contains(filename)) {
+                            index.getRemoval().remove(filename);
+                            index.save();
+                        } else {
+                            return;
+                        }
+                        /** if in removalSet, no need to save blob*/
+                    } else if (removalSet.contains(filename)) {
+                        index.removeFromRemoval(filename);
+                        /** save blob and add it to staging added map*/
+                    } else {
+                        blob.save();
+                        index.add(filename, blob.getSHA1());
+                    }
                     index.save();
                 } else {
-                    return;
-                }
-                /** if in removalSet, no need to save blob*/
-            } else if (removalSet.contains(filename)) {
-                index.removeFromRemoval(filename);
-                /** save blob and add it to staging added map*/
-            } else {
-                blob.save();
-                index.add(filename, blob.getSHA1());
-            }
-            index.save();
+            /** given filename not exist*/
+            exit("File does not exist.");
+        }
+    }
+    public static void add(String filename) {
+        /** given filename exist*/
+        if (checkFileExistence(filename)) {
+            handleIfFileExist(filename);
         } else {
             /** given filename not exist*/
             exit("File does not exist.");
         }
     }
+
+    private static void handleIfFileExist(String filename){
+        Index index = readStagingArea();
+        TreeSet<String> removalSet = getStageRemoval();
+        Blob blob = new Blob(filename);
+        String blobID = blob.getSHA1();
+        Map<String, String> map = getLastCommitMap();
+        /** If the current file is identical to the version in the current commit,no save blob*/
+        if (map.get(filename) != null && blobID.equals(map.get(filename))) {
+            if (index.getRemoval().contains(filename)) {
+                index.getRemoval().remove(filename);
+                index.save();
+            } else {
+                return;
+            }
+            /** if in removalSet, no need to save blob*/
+        } else if (removalSet.contains(filename)) {
+            index.removeFromRemoval(filename);
+            /** save blob and add it to staging added map*/
+        } else {
+            blob.save();
+            index.add(filename, blob.getSHA1());
+        }
+        index.save();
+}
 
     private static boolean checkFileExistence(String filename) {
         File file = join(CWD, filename);
