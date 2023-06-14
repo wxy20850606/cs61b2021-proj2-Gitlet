@@ -21,6 +21,7 @@ public class Index implements Serializable {
         save();
     }
 
+    /** use in condition: git added then remove, then add again*/
     public void removeFromRemoval(String filename) {
         removal.remove(filename);
         save();

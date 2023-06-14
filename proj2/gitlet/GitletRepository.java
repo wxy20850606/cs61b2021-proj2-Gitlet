@@ -32,11 +32,6 @@ public class GitletRepository implements Serializable {
     public static final File REFS_HEADS_FOLDER = join(REFS_FOLDER, "heads");
     public static final File REFS_HEAD_MASTER_FILE = join(REFS_HEADS_FOLDER, "master");
 
-    /** declare following variable like global variable to avoid redundancy */
-    private static Index index;
-    private static Blob blob;
-    private static Map<String, String> map;
-
     /** handle the `init` command*/
     public static void init() {
         /** create all needed folder/files and initialize objects*/
@@ -70,26 +65,26 @@ public class GitletRepository implements Serializable {
         /** write .gitlet/logs/HEAD file */
         StringBuilder initLog = new StringBuilder();
         initLog.append("===\n")
-                        .append("commit ")
-                                .append(initialCommit.getCommitID())
-                                        .append("\n");
+                .append("commit ")
+                .append(initialCommit.getCommitID())
+                .append("\n");
         initLog.append("Date: ")
-                        .append(initialCommit.getTimestamp().toString())
-                                .append("\n");
+                .append(initialCommit.getTimestamp().toString())
+                .append("\n");
         initLog.append(initialCommit.getMessage())
-                        .append("\n");
+                .append("\n");
         writeContents(LOG_HEAD_FILE, initLog.toString());
     }
 
     /** handle add command */
     public static void add(String filename) {
-        index = readStagingArea();
+        Index index = readStagingArea();
         TreeSet<String> removalSet = getStageRemoval();
         /** given filename exist*/
         if (checkFileExistence(filename)) {
-            blob = new Blob(filename);
+            Blob blob = new Blob(filename);
             String blobID = blob.getSHA1();
-            map = getLastCommitMap();
+            Map<String, String> map = getLastCommitMap();
             /** If the current file is identical to the version in the current commit,not save blob*/
             if (map.get(filename) != null && blobID.equals(map.get(filename))) {
                 if (index.getRemoval().contains(filename)) {
@@ -98,10 +93,10 @@ public class GitletRepository implements Serializable {
                 } else {
                     return;
                 }
-            /** if in removalSet, no need to save blob*/
+                /** if in removalSet, no need to save blob*/
             } else if (removalSet.contains(filename)) {
                 index.removeFromRemoval(filename);
-            /** save blob and add it to staging added map*/
+                /** save blob and add it to staging added map*/
             } else {
                 blob.save();
                 index.add(filename, blob.getSHA1());
@@ -120,12 +115,12 @@ public class GitletRepository implements Serializable {
 
     /** handle commit command */
     public static void commit(String message) {
-        index = readStagingArea();
+        Index index = readStagingArea();
         /** If no files have been staged, abort.*/
         if (index.stagingAreaFlag()) {
             exit("No changes added to the commit.");
         }
-        map = readStageMap();
+        Map<String, String> map = readStageMap();
         /** combine last commit map add stagingArea map*/
         Map<String, String> newCommitMap = combine(getLastCommitMap(), map);
         /** minus rm file*/
@@ -142,7 +137,7 @@ public class GitletRepository implements Serializable {
     /** handle remove command */
     public static void rm(String filename) {
         /** Unstage the file if it is currently staged for addition. delete*/
-        index = readStagingArea();
+        Index index = readStagingArea();
         if (index.getMap().containsKey(filename)) {
             index.getMap().remove(filename);
             index.save();
@@ -281,7 +276,7 @@ public class GitletRepository implements Serializable {
 
     private static List<String> untrackedFiles() {
         List<String> list = new ArrayList<String>();
-        map = getLastCommitMap();
+        Map<String, String> map = getLastCommitMap();
         Map<String, String> stageMap = readStageMap();
         List<String> fileList = plainFilenamesIn(CWD);
         for (String file:fileList) {
@@ -307,12 +302,12 @@ public class GitletRepository implements Serializable {
     private static void writeFileByCommit(String commitID, String filename) {
         /** if filename exist in current commit */
         Commit commit = readCommit(commitID);
-        map = commit.getMap();
+        Map<String, String> map = commit.getMap();
         if (map.containsKey(filename)) {
             File file = join(CWD, filename);
             /** overwrite the file if it exists in the working directory */
             String sha1 = map.get(filename);
-            blob = readBlob(sha1);
+            Blob blob = readBlob(sha1);
             if (file.exists()) {
                 writeContents(file, blob.getContent());
             } else {
@@ -463,7 +458,7 @@ public class GitletRepository implements Serializable {
 
     /** handle merge command */
     public static void merge(String branchName) {
-        index = readStagingArea();
+        Index index = readStagingArea();
         /** check all failure cases */
         handleFailureCases(branchName);
         Commit currentHead = getLastCommit();
@@ -491,7 +486,7 @@ public class GitletRepository implements Serializable {
                 String blobID = newMap.get(filename);
                 index.add(filename, blobID);
                 File file = join(CWD, filename);
-                blob = readBlob(blobID);
+                Blob blob = readBlob(blobID);
                 writeContents(file, blob.getContent());
             } else {
                 /** no need to handle rest cases*/
@@ -522,7 +517,7 @@ public class GitletRepository implements Serializable {
     }
 
     private static void handleFailureCases(String branchName) {
-        index = readStagingArea();
+        Index index = readStagingArea();
         /** If there are staged additions or removals present */
         if (!index.stagingAreaFlag()) {
             exit("You have uncommitted changes.");
@@ -684,7 +679,7 @@ public class GitletRepository implements Serializable {
         String curContent = "";
         if (cur.getMap().containsKey(filename)) {
             String blobIDInCurrentBranch = cur.getMap().get(filename);
-            blob = readBlob(blobIDInCurrentBranch);
+            Blob blob = readBlob(blobIDInCurrentBranch);
             byte[] currentContent = blob.getContent().getBytes();
             curContent = new String(currentContent, StandardCharsets.UTF_8);
         }
@@ -692,7 +687,7 @@ public class GitletRepository implements Serializable {
         String tarContent = "";
         if (tar.getMap().containsKey(filename)) {
             String blobIDInCurrentBranch = tar.getMap().get(filename);
-            blob = readBlob(blobIDInCurrentBranch);
+            Blob blob = readBlob(blobIDInCurrentBranch);
             byte[] targetContent = blob.getContent().getBytes();
             tarContent = new String(targetContent, StandardCharsets.UTF_8);
         }
@@ -702,7 +697,7 @@ public class GitletRepository implements Serializable {
         writeContents(conflictFile, contents);
 
         /** create new blob*/
-        blob = new Blob(filename);
+        Blob blob = new Blob(filename);
         blob.save();
         return blob.getSHA1();
     }
