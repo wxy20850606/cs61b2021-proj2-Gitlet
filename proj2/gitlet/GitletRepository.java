@@ -77,36 +77,6 @@ public class GitletRepository implements Serializable {
     }
 
     /** handle add command */
-    public static void add2(String filename) {
-        Index index = readStagingArea();
-        TreeSet<String> removalSet = getStageRemoval();
-        /** given filename exist*/
-        if (checkFileExistence(filename)) {
-            Blob blob = new Blob(filename);
-            String blobID = blob.getSHA1();
-            Map<String, String> map = getLastCommitMap();
-                    /** If the current file is identical to the version in the current commit,no save blob*/
-                    if (map.get(filename) != null && blobID.equals(map.get(filename))) {
-                        if (index.getRemoval().contains(filename)) {
-                            index.getRemoval().remove(filename);
-                            index.save();
-                        } else {
-                            return;
-                        }
-                        /** if in removalSet, no need to save blob*/
-                    } else if (removalSet.contains(filename)) {
-                        index.removeFromRemoval(filename);
-                        /** save blob and add it to staging added map*/
-                    } else {
-                        blob.save();
-                        index.add(filename, blob.getSHA1());
-                    }
-                    index.save();
-                } else {
-            /** given filename not exist*/
-            exit("File does not exist.");
-        }
-    }
     public static void add(String filename) {
         /** given filename exist*/
         if (checkFileExistence(filename)) {
@@ -117,7 +87,7 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    private static void handleIfFileExist(String filename){
+    private static void handleIfFileExist(String filename) {
         Index index = readStagingArea();
         TreeSet<String> removalSet = getStageRemoval();
         Blob blob = new Blob(filename);
@@ -140,7 +110,7 @@ public class GitletRepository implements Serializable {
             index.add(filename, blob.getSHA1());
         }
         index.save();
-}
+    }
 
     private static boolean checkFileExistence(String filename) {
         File file = join(CWD, filename);
@@ -154,20 +124,27 @@ public class GitletRepository implements Serializable {
         if (index.stagingAreaFlag()) {
             exit("No changes added to the commit.");
         }
-        Map<String, String> map = readStageMap();
-        /** combine last commit map add stagingArea map*/
-        Map<String, String> newCommitMap = combine(getLastCommitMap(), map);
-        /** minus rm file*/
-        TreeSet<String> removalList =  index.getRemoval();
-        for (String x : removalList) {
-            newCommitMap.remove(x);
-        }
+        /** get new commit map*/
+        Map<String, String> newCommitMap = getUpdatedMap();
         /** make commit*/
         Commit newCommit = new Commit(getLastCommit().getCommitID(), message, newCommitMap);
         newCommit.makeCommit();
         index.clear();
     }
 
+    private static Map<String, String> getUpdatedMap(){
+        Index index = readStagingArea();
+        /** get stage added map */
+        Map<String, String> map = readStageMap();
+        /** combine last commit map add stagingArea map*/
+        Map<String, String> newCommitMap = combine(getLastCommitMap(), map);
+        /** minus rm file */
+        TreeSet<String> removalList =  index.getRemoval();
+        for (String x : removalList) {
+            newCommitMap.remove(x);
+        }
+        return newCommitMap;
+    }
     /** handle remove command */
     public static void rm(String filename) {
         /** Unstage the file if it is currently staged for addition. delete*/
