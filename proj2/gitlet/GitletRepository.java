@@ -442,14 +442,9 @@ public class GitletRepository implements Serializable {
     /** handle reset command */
     public static void reset(String commitID) {
         /** handel short uid */
-        if ((commitID.length() < 40) && (commitID.length() >= 4)) {
-            commitID = turnShortIDToFull(commitID);
-            if (commitID.equals("w")) {
-                exit("No commit with that id exists.");
-            }
-        }
+        String newCommitID = handleShortID(commitID);
         /** If no commit with the given id exist */
-        File file = createFile(commitID, OBJECT_FOLDER);
+        File file = createFile(newCommitID, OBJECT_FOLDER);
         if (haveUntrackedFiles()) {
             exit("There is an untracked file in the way; delete it, or add and commit it first.");
         } else if (!file.exists()) {
@@ -457,8 +452,8 @@ public class GitletRepository implements Serializable {
         } else {
             /** If a working file is untracked in the current branch */
             /** clear cwd */
-            writeContents(getHeadPointerFile(), commitID);
-            Commit commit = readCommit(commitID);
+            writeContents(getHeadPointerFile(), newCommitID);
+            Commit commit = readCommit(newCommitID);
             List<String> files = plainFilenamesIn(CWD);
             for (String item:files) {
                 if (!commit.getMap().containsKey(item)) {
@@ -467,7 +462,7 @@ public class GitletRepository implements Serializable {
             }
             /** recover cwd */
             for (String filename : commit.getMap().keySet()) {
-                writeFileByCommit(commitID, filename);
+                writeFileByCommit(newCommitID, filename);
             }
             /** clear staging area */
             readStagingArea().clear();
