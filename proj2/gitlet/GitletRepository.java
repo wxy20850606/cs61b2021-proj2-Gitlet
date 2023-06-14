@@ -343,16 +343,17 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    private static String handleShortID(String commitID){
+    private static String handleShortID(String commitID) {
+        String fullCommitID = "w";
         if ((commitID.length() < 40) && (commitID.length() >= 4)) {
-            commitID = turnShortIDToFull(commitID);
-            if (commitID.equals("w")) {
+            fullCommitID = turnShortIDToFull(commitID);
+            if (fullCommitID.equals("w")) {
                 exit("No commit with that id exists.");
             }
         } else {
-            return commitID;
+            fullCommitID = commitID;
         }
-        return commitID;
+        return fullCommitID;
     }
     private static String turnShortIDToFull(String shortID) {
         File folder = join(OBJECT_FOLDER, shortID.substring(0, 2));
@@ -402,6 +403,8 @@ public class GitletRepository implements Serializable {
             writeContents(HEAD_FILE, head);
         }
     }
+
+    private static void handle
 
     /** handle branch function*/
     public static void branch(String branchName) {
