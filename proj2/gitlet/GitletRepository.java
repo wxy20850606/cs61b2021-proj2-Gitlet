@@ -151,7 +151,7 @@ public class GitletRepository implements Serializable {
         /** Unstage the file if it is currently staged for addition. delete*/
         Index index = readStagingArea();
         if (index.getMap().containsKey(filename)) {
-            index.getMap().remove(filename);
+            index.stageRemoval(filename);
         } else if (getLastCommitMap().containsKey(filename)) {
             /** If the file is tracked in the current commit, stage it for removal ,delete*/
             index.stageRemoval(filename);
