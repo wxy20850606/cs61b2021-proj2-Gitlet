@@ -339,7 +339,7 @@ public class GitletRepository implements Serializable {
         if (!file.exists()) {
             exit("No commit with that id exists.");
         } else {
-            writeFileByCommit(commitID, filename);
+            writeFileByCommit(newCommitID, filename);
         }
     }
 
@@ -403,7 +403,6 @@ public class GitletRepository implements Serializable {
             writeContents(HEAD_FILE, head);
         }
     }
-
 
     /** handle branch function*/
     public static void branch(String branchName) {
