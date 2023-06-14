@@ -404,7 +404,6 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    private static void handle
 
     /** handle branch function*/
     public static void branch(String branchName) {
