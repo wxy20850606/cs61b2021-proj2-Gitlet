@@ -378,7 +378,7 @@ public class GitletRepository implements Serializable {
         writeContents(HEAD_FILE, "refs/heads/" + branchName);
     }
 
-    private static void recoverAndDeleteFiles(String branchName){
+    private static void recoverAndDeleteFiles(String branchName) {
         String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
         Commit headCommit = readCommit(headCommitID);
         Map<String, String> targetMap = headCommit.getMap();
@@ -394,7 +394,7 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    private static void handleCheckoutFailureCases(String branchName){
+    private static void handleCheckoutFailureCases(String branchName) {
         /** If no branch with that name exists  */
         if (!branchExist(branchName)) {
             exit("No such branch exists.");
@@ -449,12 +449,12 @@ public class GitletRepository implements Serializable {
 
     /** handle reset command */
     public static void reset(String commitID) {
+        /** If a working file is untracked in the current branch */
         exitIfHaveUntracked();
         /** handel short uid */
         String newCommitID = handleShortID(commitID);
         File file = createFile(newCommitID, OBJECT_FOLDER);
         exitIfFileNotExist(file);
-        /** If a working file is untracked in the current branch */
         /** clear cwd */
         writeContents(getHeadPointerFile(), newCommitID);
         Commit commit = readCommit(newCommitID);
