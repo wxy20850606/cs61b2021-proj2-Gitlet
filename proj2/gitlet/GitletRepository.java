@@ -372,11 +372,17 @@ public class GitletRepository implements Serializable {
     /** handle  checkout [branch name] command*/
     public static void checkoutBranch(String branchName) {
         exitIfHaveUntracked();
-        handleCheckoutFailureCase(branchName);
-        /** recover all the files */
+        handleCheckoutFailureCases(branchName);
+        recoverAndDeleteFiles(branchName);
+        /** update the HEAD file*/
+        writeContents(HEAD_FILE, "refs/heads/" + branchName);
+    }
+
+    private static void recoverAndDeleteFiles(String branchName){
         String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
         Commit headCommit = readCommit(headCommitID);
         Map<String, String> targetMap = headCommit.getMap();
+        /** recover all the files */
         for (String filename:targetMap.keySet()) {
             writeFileByCommit(headCommitID, filename);
         }
@@ -386,12 +392,10 @@ public class GitletRepository implements Serializable {
                 restrictedDelete(join(CWD, filename));
             }
         }
-        /** update the HEAD file*/
-        String head = "refs/heads/" + branchName;
-        writeContents(HEAD_FILE, head);
     }
 
-    private static void handleCheckoutFailureCase(String branchName){
+    private static void delete
+    private static void handleCheckoutFailureCases(String branchName){
         /** If no branch with that name exists  */
         if (!branchExist(branchName)) {
             exit("No such branch exists.");
