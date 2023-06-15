@@ -337,7 +337,7 @@ public class GitletRepository implements Serializable {
         String newCommitID = handleShortID(commitID);
         File file = createFile(newCommitID, OBJECT_FOLDER);
         /** exist if not exist */
-        //exitIfFileNotExist(file);
+        exitIfFileNotExist(file);
         /** if exist, write file */
         writeFileByCommit(newCommitID, filename);
     }
@@ -372,6 +372,26 @@ public class GitletRepository implements Serializable {
     /** handle  checkout [branch name] command*/
     public static void checkoutBranch(String branchName) {
         exitIfHaveUntracked();
+        handleCheckoutFailureCase(branchName);
+        /** recover all the files */
+        String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
+        Commit headCommit = readCommit(headCommitID);
+        Map<String, String> targetMap = headCommit.getMap();
+        for (String filename:targetMap.keySet()) {
+            writeFileByCommit(headCommitID, filename);
+        }
+        /** delete if exist in current branch but not in the given branch */
+        for (String filename:getLastCommitMap().keySet()) {
+            if (!targetMap.containsKey(filename)) {
+                restrictedDelete(join(CWD, filename));
+            }
+        }
+        /** update the HEAD file*/
+        String head = "refs/heads/" + branchName;
+        writeContents(HEAD_FILE, head);
+    }
+
+    private static void handleCheckoutFailureCase(String branchName){
         /** If no branch with that name exists  */
         if (!branchExist(branchName)) {
             exit("No such branch exists.");
@@ -379,22 +399,7 @@ public class GitletRepository implements Serializable {
             /** If that branch is the current branch */
             exit("No need to checkout the current branch.");
         } else {
-            /** recover all the files */
-            String headCommitID = readContentsAsString(join(REFS_HEADS_FOLDER, branchName));
-            Commit headCommit = readCommit(headCommitID);
-            Map<String, String> targetMap = headCommit.getMap();
-            for (String filename:targetMap.keySet()) {
-                writeFileByCommit(headCommitID, filename);
-            }
-            /** delete if exist in current branch but not in the given branch */
-            for (String filename:getLastCommitMap().keySet()) {
-                if (!targetMap.containsKey(filename)) {
-                    restrictedDelete(join(CWD, filename));
-                }
-            }
-            /** update the HEAD file*/
-            String head = "refs/heads/" + branchName;
-            writeContents(HEAD_FILE, head);
+            return;
         }
     }
 
