@@ -337,7 +337,7 @@ public class GitletRepository implements Serializable {
         String newCommitID = handleShortID(commitID);
         File file = createFile(newCommitID, OBJECT_FOLDER);
         /** exist if not exist */
-        exitIfFileNotExist(file);
+        //exitIfFileNotExist(file);
         /** if exist, write file */
         writeFileByCommit(newCommitID, filename);
     }
@@ -464,7 +464,7 @@ public class GitletRepository implements Serializable {
         readStagingArea().clear();
     }
 
-    private static void exitIfFileNotExist(File file){
+    private static void exitIfFileNotExist(File file) {
         if (!file.exists()) {
             exit("No commit with that id exists.");
         }
