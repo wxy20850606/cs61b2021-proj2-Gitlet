@@ -394,7 +394,6 @@ public class GitletRepository implements Serializable {
         }
     }
 
-    private static void delete
     private static void handleCheckoutFailureCases(String branchName){
         /** If no branch with that name exists  */
         if (!branchExist(branchName)) {
